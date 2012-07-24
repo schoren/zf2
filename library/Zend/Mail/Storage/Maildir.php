@@ -367,7 +367,8 @@ class Maildir extends AbstractStorage
      */
     public function removeMessage($id)
     {
-        throw new Exception\RuntimeException('maildir is (currently) read-only');
+        $file = $this->getMessage($id)->getFilename();
+        unlink($file);
     }
 
     /**
