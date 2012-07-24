@@ -80,7 +80,7 @@ class File extends Part\File implements MessageInterface
 
     public function getFilename()
     {
-        $meta_data = stream_get_meta_data($stream_or_file_pointer);
+        $meta_data = stream_get_meta_data($this->_fh);
         return $meta_data["uri"];
 
     }
