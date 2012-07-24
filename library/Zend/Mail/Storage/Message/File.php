@@ -9,7 +9,6 @@
  */
 
 namespace Zend\Mail\Storage\Message;
-
 use Zend\Mail\Storage\Part;
 
 /**
@@ -22,6 +21,7 @@ class File extends Part\File implements MessageInterface
      * flags for this message
      * @var array
      */
+
     protected $_flags = array();
 
     /**
@@ -33,6 +33,7 @@ class File extends Part\File implements MessageInterface
      * @param  array $params
      * @throws \Zend\Mail\Storage\Exception\ExceptionInterface
      */
+
     public function __construct(array $params)
     {
         if (!empty($params['flags'])) {
@@ -48,6 +49,7 @@ class File extends Part\File implements MessageInterface
      *
      * @return string toplines
      */
+
     public function getTopLines()
     {
         return $this->_topLines;
@@ -59,6 +61,7 @@ class File extends Part\File implements MessageInterface
      * @param mixed $flag a flag name, use constants defined in \Zend\Mail\Storage
      * @return bool true if set, otherwise false
      */
+
     public function hasFlag($flag)
     {
         return isset($this->_flags[$flag]);
@@ -69,8 +72,16 @@ class File extends Part\File implements MessageInterface
      *
      * @return array array with flags, key and value are the same for easy lookup
      */
+
     public function getFlags()
     {
         return $this->_flags;
+    }
+
+    public function getFilename()
+    {
+        $meta_data = stream_get_meta_data($stream_or_file_pointer);
+        return $meta_data["uri"];
+
     }
 }
