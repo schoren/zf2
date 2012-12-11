@@ -177,7 +177,7 @@ class ValidatorChain implements
             }
             $result         = false;
             $messages       = $validator->getMessages();
-            $this->messages = array_merge($this->messages, $messages);
+            $this->messages = array_replace_recursive($this->messages, $messages);
             if ($element['breakChainOnFailure']) {
                 break;
             }
@@ -211,6 +211,16 @@ class ValidatorChain implements
     }
 
     /**
+     * Get all the validators
+     *
+     * @return array
+     */
+    public function getValidators()
+    {
+        return $this->validators;
+    }
+
+    /**
      * Invoke chain as command
      *
      * @param  mixed $value
@@ -219,5 +229,20 @@ class ValidatorChain implements
     public function __invoke($value)
     {
         return $this->isValid($value);
+    }
+
+    /**
+     * Prepare validator chain for serialization
+     *
+     * Plugin manager (property 'plugins') cannot
+     * be serialized. On wakeup the property remains unset
+     * and next invokation to getPluginManager() sets
+     * the default plugin manager instance (ValidatorPluginManager).
+     *
+     * @return array
+     */
+    public function __sleep()
+    {
+        return array('validators','messages');
     }
 }

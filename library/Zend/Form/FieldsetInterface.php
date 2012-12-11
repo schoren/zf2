@@ -22,7 +22,8 @@ interface FieldsetInterface extends
     Countable,
     IteratorAggregate,
     ElementInterface,
-    ElementPrepareAwareInterface
+    ElementPrepareAwareInterface,
+    FormFactoryAwareInterface
 {
     /**
      * Add an element or fieldset
@@ -58,9 +59,18 @@ interface FieldsetInterface extends
      * Remove a named element or fieldset
      *
      * @param  string $elementOrFieldset
-     * @return void
+     * @return FieldsetInterface
      */
     public function remove($elementOrFieldset);
+
+    /**
+     * Set/change the priority of an element or fieldset
+     *
+     * @param string $elementOrFieldset
+     * @param int $priority
+     * @return FieldsetInterface
+     */
+    public function setPriority($elementOrFieldset, $priority);
 
     /**
      * Retrieve all attached elements
@@ -104,6 +114,14 @@ interface FieldsetInterface extends
     public function getObject();
 
     /**
+     * Checks if the object can be set in this fieldset
+     *
+     * @param $object
+     * @return boolean
+     */
+    public function allowObjectBinding($object);
+
+    /**
      * Set the hydrator to use when binding an object to the element
      *
      * @param  HydratorInterface $hydrator
@@ -125,4 +143,11 @@ interface FieldsetInterface extends
      * @return mixed
      */
     public function bindValues(array $values = array());
+
+    /**
+     * Checks if this fieldset can bind data
+     *
+     * @return boolean
+     */
+    public function allowValueBinding();
 }

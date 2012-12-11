@@ -93,7 +93,7 @@ class Code39 extends AbstractObject
     /**
      * Set text to encode
      * @param string $value
-     * @return Zend_Barcode_Object
+     * @return Code39
      */
     public function setText($value)
     {
@@ -119,9 +119,9 @@ class Code39 extends AbstractObject
         $text = parent::getTextToDisplay();
         if (substr($text, 0, 1) != '*' && substr($text, -1) != '*') {
             return '*' . $text . '*';
-        } else {
-            return $text;
         }
+
+        return $text;
     }
 
     /**

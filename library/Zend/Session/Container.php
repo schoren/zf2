@@ -88,7 +88,7 @@ class Container extends ArrayObject
      */
     public static function setDefaultManager(Manager $manager = null)
     {
-        self::$defaultManager = $manager;
+        static::$defaultManager = $manager;
     }
 
     /**
@@ -101,16 +101,16 @@ class Container extends ArrayObject
      */
     public static function getDefaultManager()
     {
-        if (null === self::$defaultManager) {
-            $manager = new self::$managerDefaultClass();
+        if (null === static::$defaultManager) {
+            $manager = new static::$managerDefaultClass();
             if (!$manager instanceof Manager) {
                 throw new Exception\InvalidArgumentException(
                     'Invalid default manager type provided; must implement ManagerInterface'
                 );
             }
-            self::$defaultManager = $manager;
+            static::$defaultManager = $manager;
         }
-        return self::$defaultManager;
+        return static::$defaultManager;
     }
 
     /**
@@ -133,10 +133,10 @@ class Container extends ArrayObject
     protected function setManager(Manager $manager = null)
     {
         if (null === $manager) {
-            $manager = self::getDefaultManager();
+            $manager = static::getDefaultManager();
             if (!$manager instanceof Manager) {
                 throw new Exception\InvalidArgumentException(
-                    'Manager provided is invalid; must implement ManagerInterface interface'
+                    'Manager provided is invalid; must implement ManagerInterface'
                 );
             }
         }
@@ -439,6 +439,23 @@ class Container extends ArrayObject
     }
 
     /**
+     * Exchange the current array with another array or object.
+     *
+     * @param array|object $input
+     * @return array Returns the old array
+     * @see ArrayObject::exchangeArray()
+     */
+    public function exchangeArray($input)
+    {
+        $storage = $this->verifyNamespace();
+        $name    = $this->getName();
+
+        $old = $storage[$name];
+        $storage[$name] = $input;
+        return (array) $old;
+    }
+
+    /**
      * Iterate over session container
      *
      * @return Iterator
@@ -470,6 +487,7 @@ class Container extends ArrayObject
         }
 
         if (null === $vars) {
+            $this->expireKeys(); // first we need to expire global key, since it can already be expired
             $data = array('EXPIRE' => $ts);
         } elseif (is_array($vars)) {
             // Cannot pass "$this" to a lambda
@@ -506,6 +524,7 @@ class Container extends ArrayObject
      *
      * @param  int $hops
      * @param  null|string|array $vars
+     * @throws Exception\InvalidArgumentException
      * @return Container
      */
     public function setExpirationHops($hops, $vars = null)
@@ -518,6 +537,7 @@ class Container extends ArrayObject
         }
 
         if (null === $vars) {
+            $this->expireKeys(); // first we need to expire global key, since it can already be expired
             $data = array('EXPIRE_HOPS' => array('hops' => $hops, 'ts' => $ts));
         } elseif (is_array($vars)) {
             // Cannot pass "$this" to a lambda

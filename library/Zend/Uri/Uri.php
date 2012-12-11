@@ -10,6 +10,7 @@
 
 namespace Zend\Uri;
 
+use Zend\Escaper\Escaper;
 use Zend\Validator;
 
 /**
@@ -18,12 +19,12 @@ use Zend\Validator;
  * @category  Zend
  * @package   Zend_Uri
  */
-class Uri
+class Uri implements UriInterface
 {
     /**
      * Character classes defined in RFC-3986
      */
-    const CHAR_UNRESERVED = '\w\-\.~';
+    const CHAR_UNRESERVED = 'a-zA-Z0-9_\-\.~';
     const CHAR_GEN_DELIMS = ':\/\?#\[\]@';
     const CHAR_SUB_DELIMS = '!\$&\'\(\)\*\+,;=';
     const CHAR_RESERVED   = ':\/\?#\[\]@!\$&\'\(\)\*\+,;=';
@@ -126,6 +127,11 @@ class Uri
     protected static $defaultPorts = array();
 
     /**
+     * @var Escaper
+     */
+    protected static $escaper;
+
+    /**
      * Create a new URI object
      *
      * @param  Uri|string|null $uri
@@ -135,7 +141,7 @@ class Uri
     {
         if (is_string($uri)) {
             $this->parse($uri);
-        } elseif ($uri instanceof Uri) {
+        } elseif ($uri instanceof UriInterface) {
             // Copy constructor
             $this->setScheme($uri->getScheme());
             $this->setUserInfo($uri->getUserInfo());
@@ -150,6 +156,31 @@ class Uri
                 (is_object($uri) ? get_class($uri) : gettype($uri))
             ));
         }
+    }
+
+    /**
+     * Set Escaper instance
+     *
+     * @param  Escaper $escaper
+     */
+    public static function setEscaper(Escaper $escaper)
+    {
+        static::$escaper = $escaper;
+    }
+
+    /**
+     * Retrieve Escaper instance
+     *
+     * Lazy-loads one if none provided
+     *
+     * @return Escaper
+     */
+    public static function getEscaper()
+    {
+        if (null === static::$escaper) {
+            static::setEscaper(new Escaper());
+        }
+        return static::$escaper;
     }
 
     /**
@@ -276,6 +307,7 @@ class Uri
             $this->setPath($match[0]);
             $uri = substr($uri, strlen($match[0]));
         }
+
         if (!$uri) {
             return $this;
         }
@@ -387,6 +419,7 @@ class Uri
         }
 
         // If path is empty (and we have a host), path should be '/'
+        // Isn't this valid ONLY for HTTP-URI?
         if ($this->host && empty($this->path)) {
             $this->path = '/';
         }
@@ -933,8 +966,9 @@ class Uri
         }
 
         $regex   = '/(?:[^' . self::CHAR_UNRESERVED . self::CHAR_SUB_DELIMS . '%:]|%(?![A-Fa-f0-9]{2}))/';
-        $replace = function($match) {
-            return rawurlencode($match[0]);
+        $escaper = static::getEscaper();
+        $replace = function ($match) use ($escaper) {
+            return $escaper->escapeUrl($match[0]);
         };
 
         return preg_replace_callback($regex, $replace, $userInfo);
@@ -947,6 +981,7 @@ class Uri
      * part with percent-encoded representation
      *
      * @param  string $path
+     * @throws Exception\InvalidArgumentException
      * @return string
      */
     public static function encodePath($path)
@@ -959,8 +994,9 @@ class Uri
         }
 
         $regex   = '/(?:[^' . self::CHAR_UNRESERVED . ':@&=\+\$,\/;%]+|%(?![A-Fa-f0-9]{2}))/';
-        $replace = function($match) {
-            return rawurlencode($match[0]);
+        $escaper = static::getEscaper();
+        $replace = function ($match) use ($escaper) {
+            return $escaper->escapeUrl($match[0]);
         };
 
         return preg_replace_callback($regex, $replace, $path);
@@ -987,8 +1023,9 @@ class Uri
         }
 
         $regex   = '/(?:[^' . self::CHAR_UNRESERVED . self::CHAR_SUB_DELIMS . '%:@\/\?]+|%(?![A-Fa-f0-9]{2}))/';
-        $replace = function($match) {
-            return rawurlencode($match[0]);
+        $escaper = static::getEscaper();
+        $replace = function ($match) use ($escaper) {
+            return $escaper->escapeUrl($match[0]);
         };
 
         return preg_replace_callback($regex, $replace, $input);
@@ -1285,7 +1322,7 @@ class Uri
      */
     protected static function decodeUrlEncodedChars($input, $allowed = '')
     {
-        $decodeCb = function($match) use ($allowed) {
+        $decodeCb = function ($match) use ($allowed) {
             $char = rawurldecode($match[0]);
             if (preg_match($allowed, $char)) {
                 return $char;

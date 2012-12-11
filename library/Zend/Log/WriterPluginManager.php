@@ -11,7 +11,6 @@
 namespace Zend\Log;
 
 use Zend\ServiceManager\AbstractPluginManager;
-use Zend\ServiceManager\ConfigurationInterface;
 
 /**
  * @category   Zend
@@ -26,7 +25,7 @@ class WriterPluginManager extends AbstractPluginManager
      */
     protected $invokableClasses = array(
         'db'          => 'Zend\Log\Writer\Db',
-        'firebug'     => 'Zend\Log\Writer\Firebug',
+        'firephp'     => 'Zend\Log\Writer\FirePhp',
         'mail'        => 'Zend\Log\Writer\Mail',
         'mock'        => 'Zend\Log\Writer\Mock',
         'null'        => 'Zend\Log\Writer\Null',
@@ -34,6 +33,13 @@ class WriterPluginManager extends AbstractPluginManager
         'syslog'      => 'Zend\Log\Writer\Syslog',
         'zendmonitor' => 'Zend\Log\Writer\ZendMonitor',
     );
+
+    /**
+     * Allow many writers of the same type
+     *
+     * @var bool
+     */
+    protected $shareByDefault = false;
 
     /**
      * Validate the plugin

@@ -24,36 +24,36 @@ class ReflectionParameter
     /**
      * @var ReflectionParameter
      */
-    protected $_reflection;
+    protected $reflection;
 
     /**
      * Parameter position
      * @var int
      */
-    protected $_position;
+    protected $position;
 
     /**
      * Parameter type
      * @var string
      */
-    protected $_type;
+    protected $type;
 
     /**
      * Parameter description
      * @var string
      */
-    protected $_description;
+    protected $description;
 
     /**
      * Constructor
      *
-     * @param ReflectionParameter $r
+     * @param \ReflectionParameter $r
      * @param string $type Parameter type
      * @param string $description Parameter description
      */
     public function __construct(\ReflectionParameter $r, $type = 'mixed', $description = '')
     {
-        $this->_reflection = $r;
+        $this->reflection = $r;
         $this->setType($type);
         $this->setDescription($description);
     }
@@ -63,12 +63,13 @@ class ReflectionParameter
      *
      * @param string $method
      * @param array $args
+     * @throws Exception\BadMethodCallException
      * @return mixed
      */
     public function __call($method, $args)
     {
-        if (method_exists($this->_reflection, $method)) {
-            return call_user_func_array(array($this->_reflection, $method), $args);
+        if (method_exists($this->reflection, $method)) {
+            return call_user_func_array(array($this->reflection, $method), $args);
         }
 
         throw new Exception\BadMethodCallException('Invalid reflection method');
@@ -81,13 +82,14 @@ class ReflectionParameter
      */
     public function getType()
     {
-        return $this->_type;
+        return $this->type;
     }
 
     /**
      * Set parameter type
      *
      * @param string|null $type
+     * @throws Exception\InvalidArgumentException
      * @return void
      */
     public function setType($type)
@@ -96,7 +98,7 @@ class ReflectionParameter
             throw new Exception\InvalidArgumentException('Invalid parameter type');
         }
 
-        $this->_type = $type;
+        $this->type = $type;
     }
 
     /**
@@ -106,13 +108,14 @@ class ReflectionParameter
      */
     public function getDescription()
     {
-        return $this->_description;
+        return $this->description;
     }
 
     /**
      * Set parameter description
      *
      * @param string|null $description
+     * @throws Exception\InvalidArgumentException
      * @return void
      */
     public function setDescription($description)
@@ -121,7 +124,7 @@ class ReflectionParameter
             throw new Exception\InvalidArgumentException('Invalid parameter description');
         }
 
-        $this->_description = $description;
+        $this->description = $description;
     }
 
     /**
@@ -132,7 +135,7 @@ class ReflectionParameter
      */
     public function setPosition($index)
     {
-        $this->_position = (int) $index;
+        $this->position = (int) $index;
     }
 
     /**
@@ -142,6 +145,6 @@ class ReflectionParameter
      */
     public function getPosition()
     {
-        return $this->_position;
+        return $this->position;
     }
 }

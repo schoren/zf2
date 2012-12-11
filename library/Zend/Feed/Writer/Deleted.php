@@ -25,7 +25,7 @@ class Deleted
      *
      * @var array
      */
-    protected $_data = array();
+    protected $data = array();
 
     /**
      * Holds the value "atom" or "rss" depending on the feed type set when
@@ -33,20 +33,24 @@ class Deleted
      *
      * @var string
      */
-    protected $_type = null;
+    protected $type = null;
 
     /**
      * Set the feed character encoding
      *
-     * @return string|null
+     * @param  $encoding
      * @throws Exception\InvalidArgumentException
+     * @return string|null
+     * @return Deleted
      */
     public function setEncoding($encoding)
     {
         if (empty($encoding) || !is_string($encoding)) {
             throw new Exception\InvalidArgumentException('Invalid parameter: parameter must be a non-empty string');
         }
-        $this->_data['encoding'] = $encoding;
+        $this->data['encoding'] = $encoding;
+
+        return $this;
     }
 
     /**
@@ -56,22 +60,25 @@ class Deleted
      */
     public function getEncoding()
     {
-        if (!array_key_exists('encoding', $this->_data)) {
+        if (!array_key_exists('encoding', $this->data)) {
             return 'UTF-8';
         }
-        return $this->_data['encoding'];
+        return $this->data['encoding'];
     }
 
     /**
      * Unset a specific data point
      *
      * @param string $name
+     * @return Deleted
      */
     public function remove($name)
     {
-        if (isset($this->_data[$name])) {
-            unset($this->_data[$name]);
+        if (isset($this->data[$name])) {
+            unset($this->data[$name]);
         }
+
+        return $this;
     }
 
     /**
@@ -80,10 +87,12 @@ class Deleted
      * on their appropriateness for the current type, e.g. renderers.
      *
      * @param string $type
+     * @return Deleted
      */
     public function setType($type)
     {
-        $this->_type = $type;
+        $this->type = $type;
+        return $this;
     }
 
     /**
@@ -93,7 +102,7 @@ class Deleted
      */
     public function getType()
     {
-        return $this->_type;
+        return $this->type;
     }
 
     /**
@@ -101,21 +110,27 @@ class Deleted
      *
      * @param $reference
      * @throws Exception\InvalidArgumentException
+     * @return Deleted
      */
     public function setReference($reference)
     {
         if (empty($reference) || !is_string($reference)) {
             throw new Exception\InvalidArgumentException('Invalid parameter: reference must be a non-empty string');
         }
-        $this->_data['reference'] = $reference;
+        $this->data['reference'] = $reference;
+
+        return $this;
     }
 
+    /**
+     * @return string
+     */
     public function getReference()
     {
-        if (!array_key_exists('reference', $this->_data)) {
+        if (!array_key_exists('reference', $this->data)) {
             return null;
         }
-        return $this->_data['reference'];
+        return $this->data['reference'];
     }
 
     /**
@@ -123,6 +138,7 @@ class Deleted
      *
      * @param null|string|DateTime $date
      * @throws Exception\InvalidArgumentException
+     * @return Deleted
      */
     public function setWhen($date = null)
     {
@@ -134,18 +150,20 @@ class Deleted
             throw new Exception\InvalidArgumentException('Invalid DateTime object or UNIX Timestamp'
             . ' passed as parameter');
         }
-        $this->_data['when'] = $date;
+        $this->data['when'] = $date;
+
+        return $this;
     }
 
     /**
-     * @return \DateTime
+     * @return DateTime
      */
     public function getWhen()
     {
-        if (!array_key_exists('when', $this->_data)) {
+        if (!array_key_exists('when', $this->data)) {
             return null;
         }
-        return $this->_data['when'];
+        return $this->data['when'];
     }
 
     /**
@@ -153,6 +171,7 @@ class Deleted
      *
      * @param array $by
      * @throws Exception\InvalidArgumentException
+     * @return Deleted
      */
     public function setBy(array $by)
     {
@@ -182,28 +201,41 @@ class Deleted
             }
             $author['uri'] = $by['uri'];
         }
-        $this->_data['by'] = $author;
+        $this->data['by'] = $author;
+
+        return $this;
     }
 
+    /**
+     * @return string
+     */
     public function getBy()
     {
-        if (!array_key_exists('by', $this->_data)) {
+        if (!array_key_exists('by', $this->data)) {
             return null;
         }
-        return $this->_data['by'];
+        return $this->data['by'];
     }
 
+    /**
+     * @param string $comment
+     * @return Deleted
+     */
     public function setComment($comment)
     {
-        $this->_data['comment'] = $comment;
+        $this->data['comment'] = $comment;
+        return $this;
     }
 
+    /**
+     * @return string
+     */
     public function getComment()
     {
-        if (!array_key_exists('comment', $this->_data)) {
+        if (!array_key_exists('comment', $this->data)) {
             return null;
         }
-        return $this->_data['comment'];
+        return $this->data['comment'];
     }
 
 }

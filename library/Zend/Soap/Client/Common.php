@@ -22,20 +22,20 @@ class Common extends \SoapClient
     /**
      * doRequest() pre-processing method
      *
-     * @var callback
+     * @var callable
      */
-    protected $_doRequestCallback;
+    protected $doRequestCallback;
 
     /**
      * Common Soap Client constructor
      *
-     * @param callback $doRequestMethod
+     * @param callable $doRequestCallback
      * @param string $wsdl
      * @param array $options
      */
     public function __construct($doRequestCallback, $wsdl, $options)
     {
-        $this->_doRequestCallback = $doRequestCallback;
+        $this->doRequestCallback = $doRequestCallback;
 
         parent::__construct($wsdl, $options);
     }
@@ -54,9 +54,9 @@ class Common extends \SoapClient
     public function __doRequest($request, $location, $action, $version, $one_way = null)
     {
         if ($one_way === null) {
-            return call_user_func($this->_doRequestCallback, $this, $request, $location, $action, $version);
+            return call_user_func($this->doRequestCallback, $this, $request, $location, $action, $version);
         } else {
-            return call_user_func($this->_doRequestCallback, $this, $request, $location, $action, $version, $one_way);
+            return call_user_func($this->doRequestCallback, $this, $request, $location, $action, $version, $one_way);
         }
     }
 

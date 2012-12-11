@@ -11,9 +11,9 @@
 namespace Zend\Navigation\Page;
 
 use Traversable;
-use Zend\Acl\Resource\ResourceInterface as AclResource;
 use Zend\Navigation\AbstractContainer;
 use Zend\Navigation\Exception;
+use Zend\Permissions\Acl\Resource\ResourceInterface as AclResource;
 use Zend\Stdlib\ArrayUtils;
 
 /**
@@ -102,7 +102,7 @@ abstract class AbstractPage extends AbstractContainer
     /**
      * ACL resource associated with this page
      *
-     * @var string|\Zend\Acl\Resource|null
+     * @var string|AclResource|null
      */
     protected $resource;
 
@@ -238,7 +238,7 @@ abstract class AbstractPage extends AbstractContainer
      *
      * @param  array|Traversable $options [optional] page options. Default is
      *                                    null, which should set defaults.
-     * @throws Exception if invalid options are given
+     * @throws Exception\InvalidArgumentException if invalid options are given
      */
     public function __construct($options = null)
     {
@@ -475,6 +475,8 @@ abstract class AbstractPage extends AbstractContainer
      *
      * @param  array|Traversable $relations  [optional] an associative array of
      *                           forward links to other pages
+     * @throws Exception\InvalidArgumentException if $relations is not an array
+     *                                            or Traversable object
      * @return AbstractPage fluent interface, returns self
      */
     public function setRel($relations = null)
@@ -539,6 +541,8 @@ abstract class AbstractPage extends AbstractContainer
      * @param  array|Traversable $relations [optional] an associative array of
      *                                      reverse links to other pages
      *
+     * @throws Exception\InvalidArgumentException if $relations it not an array
+     *                                            or Traversable object
      * @return AbstractPage fluent interface, returns self
      */
     public function setRev($relations = null)
@@ -641,7 +645,7 @@ abstract class AbstractPage extends AbstractContainer
     }
 
     /**
-     * Sets ACL resource assoicated with this page
+     * Sets ACL resource associated with this page
      *
      * @param  string|AclResource $resource [optional] resource to associate
      *                                      with page. Default is null, which
@@ -659,7 +663,7 @@ abstract class AbstractPage extends AbstractContainer
         } else {
             throw new Exception\InvalidArgumentException(
                 'Invalid argument: $resource must be null, a string, ' .
-                'or an instance of Zend\Acl\Resource'
+                'or an instance of Zend\Permissions\Acl\Resource\ResourceInterface'
             );
         }
 
@@ -667,7 +671,7 @@ abstract class AbstractPage extends AbstractContainer
     }
 
     /**
-     * Returns ACL resource assoicated with this page
+     * Returns ACL resource associated with this page
      *
      * @return string|AclResource|null  ACL resource or null
      */
@@ -763,7 +767,7 @@ abstract class AbstractPage extends AbstractContainer
         if (is_string($visible) && 'false' == strtolower($visible)) {
             $visible = false;
         }
-        $this->visible = (bool)$visible;
+        $this->visible = (bool) $visible;
         return $this;
     }
 
@@ -811,6 +815,7 @@ abstract class AbstractPage extends AbstractContainer
      *
      * @param  AbstractContainer $parent [optional] new parent to set.
      *                           Default is null which will set no parent.
+     * @throws Exception\InvalidArgumentException
      * @return AbstractPage fluent interface, returns self
      */
     public function setParent(AbstractContainer $parent = null)
@@ -871,7 +876,7 @@ abstract class AbstractPage extends AbstractContainer
             );
         }
 
-        $method = 'set' . self::normalizePropertyName($property);
+        $method = 'set' . static::normalizePropertyName($property);
 
         if ($method != 'setOptions' && method_exists($this, $method)
         ) {
@@ -902,7 +907,7 @@ abstract class AbstractPage extends AbstractContainer
             );
         }
 
-        $method = 'get' . self::normalizePropertyName($property);
+        $method = 'get' . static::normalizePropertyName($property);
 
         if (method_exists($this, $method)) {
             return $this->$method();
@@ -958,7 +963,7 @@ abstract class AbstractPage extends AbstractContainer
      */
     public function __isset($name)
     {
-        $method = 'get' . self::normalizePropertyName($name);
+        $method = 'get' . static::normalizePropertyName($name);
         if (method_exists($this, $method)) {
             return true;
         }
@@ -977,7 +982,7 @@ abstract class AbstractPage extends AbstractContainer
      */
     public function __unset($name)
     {
-        $method = 'set' . self::normalizePropertyName($name);
+        $method = 'set' . static::normalizePropertyName($name);
         if (method_exists($this, $method)) {
             throw new Exception\InvalidArgumentException(
                 sprintf(

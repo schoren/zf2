@@ -26,7 +26,7 @@ abstract class AbstractAdapter
      *
      * @var array
      */
-    protected $_skipOptions = array(
+    protected $skipOptions = array(
         'options',
         'config',
     );
@@ -53,12 +53,12 @@ abstract class AbstractAdapter
      * Set options via an array
      *
      * @param  array $options
-     * @return \Zend\ProgressBar\Adapter\Adapter
+     * @return AbstractAdapter
      */
     public function setOptions(array $options)
     {
         foreach ($options as $key => $value) {
-            if (in_array(strtolower($key), $this->_skipOptions)) {
+            if (in_array(strtolower($key), $this->skipOptions)) {
                 continue;
             }
 

@@ -24,34 +24,34 @@ class AbstractRenderer
      * Extensions
      * @var array
      */
-    protected $_extensions = array();
+    protected $extensions = array();
 
     /**
-     * @var mixed
+     * @var Writer\AbstractFeed
      */
-    protected $_container = null;
+    protected $container = null;
 
     /**
      * @var DOMDocument
      */
-    protected $_dom = null;
+    protected $dom = null;
 
     /**
      * @var bool
      */
-    protected $_ignoreExceptions = false;
+    protected $ignoreExceptions = false;
 
     /**
      * @var array
      */
-    protected $_exceptions = array();
+    protected $exceptions = array();
 
     /**
      * Encoding of all text values
      *
      * @var string
      */
-    protected $_encoding = 'UTF-8';
+    protected $encoding = 'UTF-8';
 
     /**
      * Holds the value "atom" or "rss" depending on the feed type set when
@@ -59,22 +59,21 @@ class AbstractRenderer
      *
      * @var string
      */
-    protected $_type = null;
+    protected $type = null;
 
     /**
      * @var DOMElement
      */
-    protected $_rootElement = null;
+    protected $rootElement = null;
 
     /**
      * Constructor
      *
-     * @param  mixed $container
-     * @return void
+     * @param Writer\AbstractFeed $container
      */
     public function __construct($container)
     {
-        $this->_container = $container;
+        $this->container = $container;
         $this->setType($container->getType());
         $this->_loadExtensions();
     }
@@ -96,7 +95,7 @@ class AbstractRenderer
      */
     public function getDomDocument()
     {
-        return $this->_dom;
+        return $this->dom;
     }
 
     /**
@@ -112,11 +111,11 @@ class AbstractRenderer
     /**
      * Get data container of items being rendered
      *
-     * @return mixed
+     * @return Writer\AbstractFeed
      */
     public function getDataContainer()
     {
-        return $this->_container;
+        return $this->container;
     }
 
     /**
@@ -127,7 +126,7 @@ class AbstractRenderer
      */
     public function setEncoding($enc)
     {
-        $this->_encoding = $enc;
+        $this->encoding = $enc;
         return $this;
     }
 
@@ -138,7 +137,7 @@ class AbstractRenderer
      */
     public function getEncoding()
     {
-        return $this->_encoding;
+        return $this->encoding;
     }
 
     /**
@@ -153,7 +152,7 @@ class AbstractRenderer
         if (!is_bool($bool)) {
             throw new Writer\Exception\InvalidArgumentException('Invalid parameter: $bool. Should be TRUE or FALSE (defaults to TRUE if null)');
         }
-        $this->_ignoreExceptions = $bool;
+        $this->ignoreExceptions = $bool;
         return $this;
     }
 
@@ -164,7 +163,7 @@ class AbstractRenderer
      */
     public function getExceptions()
     {
-        return $this->_exceptions;
+        return $this->exceptions;
     }
 
     /**
@@ -176,7 +175,7 @@ class AbstractRenderer
      */
     public function setType($type)
     {
-        $this->_type = $type;
+        $this->type = $type;
     }
 
     /**
@@ -186,7 +185,7 @@ class AbstractRenderer
      */
     public function getType()
     {
-        return $this->_type;
+        return $this->type;
     }
 
     /**
@@ -199,7 +198,7 @@ class AbstractRenderer
      */
     public function setRootElement(DOMElement $root)
     {
-        $this->_rootElement = $root;
+        $this->rootElement = $root;
     }
 
     /**
@@ -209,7 +208,7 @@ class AbstractRenderer
      */
     public function getRootElement()
     {
-        return $this->_rootElement;
+        return $this->rootElement;
     }
 
     /**
@@ -220,6 +219,7 @@ class AbstractRenderer
     protected function _loadExtensions()
     {
         Writer\Writer::registerCoreExtensions();
+        $manager = Writer\Writer::getExtensionManager();
         $all = Writer\Writer::getExtensions();
         if (stripos(get_called_class(), 'entry')) {
             $exts = $all['entryRenderer'];
@@ -227,11 +227,10 @@ class AbstractRenderer
             $exts = $all['feedRenderer'];
         }
         foreach ($exts as $extension) {
-            $className = Writer\Writer::getPluginLoader()->getClassName($extension);
-            $this->_extensions[$extension] = new $className(
-                $this->getDataContainer()
-            );
-            $this->_extensions[$extension]->setEncoding($this->getEncoding());
+            $plugin = $manager->get($extension);
+            $plugin->setDataContainer($this->getDataContainer());
+            $plugin->setEncoding($this->getEncoding());
+            $this->extensions[$extension] = $plugin;
         }
     }
 }

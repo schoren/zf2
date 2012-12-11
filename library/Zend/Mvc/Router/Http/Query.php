@@ -21,7 +21,7 @@ use Zend\Stdlib\RequestInterface as Request;
  *
  * @package    Zend_Mvc_Router
  * @subpackage Http
- * @see        http://manuals.rubyonrails.com/read/chapter/65
+ * @see        http://guides.rubyonrails.org/routing.html
  */
 class Query implements RouteInterface
 {
@@ -102,7 +102,7 @@ class Query implements RouteInterface
     protected function recursiveUrldecode(array $array)
     {
         $matches = array();
-        foreach($array as $key => $value) {
+        foreach ($array as $key => $value) {
             if (is_array($value)) {
                 $matches[urldecode($key)] = $this->recursiveUrldecode($value);
             } else {

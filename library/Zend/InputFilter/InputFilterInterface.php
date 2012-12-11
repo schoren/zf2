@@ -11,6 +11,7 @@
 namespace Zend\InputFilter;
 
 use Countable;
+use Traversable;
 
 /**
  * @category   Zend
@@ -23,7 +24,7 @@ interface InputFilterInterface extends Countable
     /**
      * Add an input to the input filter
      *
-     * @param  InputInterface|InputFilterInterface $input
+     * @param  InputInterface|InputFilterInterface|array $input
      * @param  null|string $name Name used to retrieve this input
      * @return InputFilterInterface
      */
@@ -44,6 +45,14 @@ interface InputFilterInterface extends Countable
      * @return bool
      */
     public function has($name);
+
+    /**
+     * Remove a named input
+     *
+     * @param  string $name
+     * @return InputFilterInterface
+     */
+    public function remove($name);
 
     /**
      * Set data to use when validating and filtering

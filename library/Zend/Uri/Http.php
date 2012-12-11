@@ -172,10 +172,27 @@ class Http extends Uri
     public function getPort()
     {
         if (empty($this->port)) {
-            if (array_key_exists($this->scheme, self::$defaultPorts)) {
-                return self::$defaultPorts[$this->scheme];
+            if (array_key_exists($this->scheme, static::$defaultPorts)) {
+                return static::$defaultPorts[$this->scheme];
             }
         }
         return $this->port;
+    }
+
+    /**
+     * Parse a URI string
+     *
+     * @param  string $uri
+     * @return Http
+     */
+    public function parse($uri)
+    {
+        parent::parse($uri);
+
+        if (empty($this->path)) {
+            $this->path = '/';
+        }
+
+        return $this;
     }
 }

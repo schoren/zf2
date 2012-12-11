@@ -11,7 +11,6 @@
 namespace Zend\Session\SaveHandler;
 
 use Zend\Db\TableGateway\TableGateway;
-use Zend\Session\Exception;
 
 /**
  * DB Table Gateway session save handler
@@ -44,7 +43,7 @@ class DbTableGateway implements SaveHandlerInterface
 
     /**
      * Zend Db Table Gateway
-     * @var Zend\Db\TableGateway\TableGateway
+     * @var TableGateway
      */
     protected $tableGateway;
 
@@ -170,7 +169,7 @@ class DbTableGateway implements SaveHandlerInterface
     public function gc($maxlifetime)
     {
         $platform = $this->tableGateway->getAdapter()->getPlatform();
-        return (bool) $this->tableGateway->delete(sprintf('%s + %s > %d',
+        return (bool) $this->tableGateway->delete(sprintf('%s + %s < %d',
             $platform->quoteIdentifier($this->options->getModifiedColumn()),
             $platform->quoteIdentifier($this->options->getLifetimeColumn()),
             time()

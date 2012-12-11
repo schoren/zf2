@@ -44,12 +44,13 @@ class FormTextarea extends AbstractHelper
      * Render a form <textarea> element from the provided $element
      *
      * @param  ElementInterface $element
+     * @throws Exception\DomainException
      * @return string
      */
     public function render(ElementInterface $element)
     {
         $name   = $element->getName();
-        if (empty($name)) {
+        if (empty($name) && $name !== 0) {
             throw new Exception\DomainException(sprintf(
                 '%s requires that the element has an assigned name; none discovered',
                 __METHOD__
@@ -58,7 +59,7 @@ class FormTextarea extends AbstractHelper
 
         $attributes         = $element->getAttributes();
         $attributes['name'] = $name;
-        $content            = (string) $element->getAttribute('value');
+        $content            = (string) $element->getValue();
         $escapeHtml         = $this->getEscapeHtmlHelper();
 
         return sprintf(

@@ -14,7 +14,6 @@ use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\ListenerAggregateInterface;
 use Zend\Feed\Writer\Feed;
 use Zend\Http\Request as HttpRequest;
-use Zend\Http\Response as HttpResponse;
 use Zend\View\Model;
 use Zend\View\Renderer\FeedRenderer;
 use Zend\View\ViewEvent;
@@ -40,7 +39,6 @@ class FeedStrategy implements ListenerAggregateInterface
      * Constructor
      *
      * @param  FeedRenderer $renderer
-     * @return void
      */
     public function __construct(FeedRenderer $renderer)
     {
@@ -86,37 +84,13 @@ class FeedStrategy implements ListenerAggregateInterface
     {
         $model = $e->getModel();
 
-        if ($model instanceof Model\FeedModel) {
-            // FeedModel found
-            return $this->renderer;
-        }
-
-        $request = $e->getRequest();
-        if (!$request instanceof HttpRequest) {
-            // Not an HTTP request; cannot autodetermine
+        if (!$model instanceof Model\FeedModel) {
+            // no FeedModel present; do nothing
             return;
         }
 
-        $headers = $request->getHeaders();
-        if (!$headers->has('accept')) {
-            return;
-        }
-
-        $accept  = $headers->get('accept');
-        if (($match = $accept->match('application/rss+xml, application/atom+xml')) == false) {
-            return;
-        }
-
-        if ($match->getTypeString() == 'application/rss+xml') {
-            $this->renderer->setFeedType('rss');
-            return $this->renderer;
-        }
-
-        if ($match->getTypeString() == 'application/atom+xml') {
-            $this->renderer->setFeedType('atom');
-            return $this->renderer;
-        }
-
+        // FeedModel found
+        return $this->renderer;
     }
 
     /**

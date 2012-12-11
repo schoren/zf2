@@ -23,13 +23,13 @@ namespace Zend\Json;
  *     'integer'  =>9,
  *     'string'   =>'test string',
  *     'function' => Zend_Json_Expr(
- *         'function(){ window.alert("javascript function encoded by Zend_Json") }'
+ *         'function() { window.alert("javascript function encoded by Zend_Json") }'
  *     ),
  * );
  *
  * Zend_Json::encode($foo, false, array('enableJsonExprFinder' => true));
  * // it will returns json encoded string:
- * // {"integer":9,"string":"test string","function":function(){window.alert("javascript function encoded by Zend_Json")}}
+ * // {"integer":9,"string":"test string","function":function() {window.alert("javascript function encoded by Zend_Json")}}
  * </code>
  *
  * @category   Zend
@@ -43,17 +43,16 @@ class Expr
      *
      * @var string
      */
-    protected $_expression;
+    protected $expression;
 
     /**
      * Constructor
      *
      * @param  string $expression the expression to hold.
-     * @return void
      */
     public function __construct($expression)
     {
-        $this->_expression = (string) $expression;
+        $this->expression = (string) $expression;
     }
 
     /**
@@ -63,6 +62,6 @@ class Expr
      */
     public function __toString()
     {
-        return $this->_expression;
+        return $this->expression;
     }
 }

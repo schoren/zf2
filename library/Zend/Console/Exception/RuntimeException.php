@@ -12,11 +12,10 @@ namespace Zend\Console\Exception;
 
 /**
  * @category   Zend
- * @package    Zend_Console_Getopt
+ * @package    Zend_Console
+ * @subpackage Exception
  */
-class RuntimeException
-    extends \RuntimeException
-    implements ExceptionInterface
+class RuntimeException extends \RuntimeException implements ExceptionInterface
 {
     /**
      * Usage
@@ -30,7 +29,6 @@ class RuntimeException
      *
      * @param string $message
      * @param string $usage
-     * @return void
      */
     public function __construct($message, $usage = '')
     {

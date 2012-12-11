@@ -51,11 +51,11 @@ class Test implements AdapterInterface
     protected $responseIndex = 0;
 
     /**
-     * Wether or not the next request will fail with an exception
+     * Whether or not the next request will fail with an exception
      *
      * @var boolean
      */
-    protected $_nextRequestWillFail = false;
+    protected $nextRequestWillFail = false;
 
     /**
      * Adapter constructor, currently empty. Config is set using setOptions()
@@ -71,7 +71,7 @@ class Test implements AdapterInterface
      */
     public function setNextRequestWillFail($flag)
     {
-        $this->_nextRequestWillFail = (bool) $flag;
+        $this->nextRequestWillFail = (bool) $flag;
 
         return $this;
     }
@@ -80,6 +80,7 @@ class Test implements AdapterInterface
      * Set the configuration array for the adapter
      *
      * @param  array|Traversable $options
+     * @throws Exception\InvalidArgumentException
      */
     public function setOptions($options = array())
     {
@@ -110,8 +111,8 @@ class Test implements AdapterInterface
      */
     public function connect($host, $port = 80, $secure = false)
     {
-        if ($this->_nextRequestWillFail) {
-            $this->_nextRequestWillFail = false;
+        if ($this->nextRequestWillFail) {
+            $this->nextRequestWillFail = false;
             throw new Exception\RuntimeException('Request failed');
         }
     }
@@ -189,7 +190,7 @@ class Test implements AdapterInterface
     /**
      * Add another response to the response buffer.
      *
-     * @param string \Zend\Http\Response|$response
+     * @param string|Response $response
      */
     public function addResponse($response)
     {
@@ -205,6 +206,7 @@ class Test implements AdapterInterface
      * response will be returned on the next call to read().
      *
      * @param integer $index
+     * @throws Exception\OutOfRangeException
      */
     public function setResponseIndex($index)
     {

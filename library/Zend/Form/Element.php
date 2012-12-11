@@ -44,6 +44,10 @@ class Element implements ElementInterface
      */
     protected $options = array();
 
+    /**
+     * @var mixed
+     */
+    protected $value;
 
     /**
      * @param  null|int|string  $name    Optional name for the element
@@ -127,7 +131,7 @@ class Element implements ElementInterface
 
     /**
      * Return the specified option
-     * 
+     *
      * @param string $option
      * @return NULL|mixed
      */
@@ -136,10 +140,10 @@ class Element implements ElementInterface
         if (!isset($this->options[$option])) {
             return null;
         }
-        
+
         return $this->options[$option];
     }
-    
+
     /**
      * Set a single element attribute
      *
@@ -149,6 +153,11 @@ class Element implements ElementInterface
      */
     public function setAttribute($key, $value)
     {
+        // Do not include the value in the list of attributes
+        if ($key === 'value') {
+            $this->setValue($value);
+            return $this;
+        }
         $this->attributes[$key] = $value;
         return $this;
     }
@@ -221,6 +230,28 @@ class Element implements ElementInterface
     {
         $this->attributes = array();
         return $this;
+    }
+
+    /**
+     * Set the element value
+     *
+     * @param  mixed $value
+     * @return Element
+     */
+    public function setValue($value)
+    {
+        $this->value = $value;
+        return $this;
+    }
+
+    /**
+     * Retrieve the element value
+     *
+     * @return mixed
+     */
+    public function getValue()
+    {
+        return $this->value;
     }
 
     /**

@@ -47,31 +47,32 @@ class Server extends AbstractServer
      * Request object
      * @var Request
      */
-    protected $_request;
+    protected $request;
 
     /**
      * Response object
      * @var Response
      */
-    protected $_response;
+    protected $response;
 
     /**
      * SMD object
      * @var Smd
      */
-    protected $_serviceMap;
+    protected $serviceMap;
 
     /**
      * SMD class accessors
      * @var array
      */
-    protected $_smdMethods;
+    protected $smdMethods;
 
     /**
      * Attach a function or callback to the server
      *
-     * @param  string|array $function Valid PHP callback
-     * @param  string $namespace  Ignored
+     * @param  string|array|callable $function   Valid PHP callback
+     * @param  string                $namespace  Ignored
+     * @throws Exception\InvalidArgumentException if function invalid or not callable
      * @return Server
      */
     public function addFunction($function, $namespace = '')
@@ -145,7 +146,8 @@ class Server extends AbstractServer
      *
      * @param  string $fault
      * @param  int $code
-     * @return false
+     * @param  mixed $data
+     * @return Error
      */
     public function fault($fault = null, $code = 404, $data = null)
     {
@@ -158,6 +160,7 @@ class Server extends AbstractServer
      * Handle request
      *
      * @param  Request $request
+     * @throws Exception\InvalidArgumentException
      * @return null|Response
      */
     public function handle($request = false)
@@ -188,6 +191,7 @@ class Server extends AbstractServer
      * Load function definitions
      *
      * @param  array|Definition $definition
+     * @throws Exception\InvalidArgumentException
      * @return void
      */
     public function loadFunctions($definition)
@@ -214,7 +218,7 @@ class Server extends AbstractServer
      */
     public function setRequest(Request $request)
     {
-        $this->_request = $request;
+        $this->request = $request;
         return $this;
     }
 
@@ -225,10 +229,10 @@ class Server extends AbstractServer
      */
     public function getRequest()
     {
-        if (null === ($request = $this->_request)) {
+        if (null === ($request = $this->request)) {
             $this->setRequest(new Request\Http());
         }
-        return $this->_request;
+        return $this->request;
     }
 
     /**
@@ -239,7 +243,7 @@ class Server extends AbstractServer
      */
     public function setResponse(Response $response)
     {
-        $this->_response = $response;
+        $this->response = $response;
         return $this;
     }
 
@@ -250,10 +254,10 @@ class Server extends AbstractServer
      */
     public function getResponse()
     {
-        if (null === ($response = $this->_response)) {
+        if (null === ($response = $this->response)) {
             $this->setResponse(new Response\Http());
         }
-        return $this->_response;
+        return $this->response;
     }
 
     /**
@@ -314,10 +318,10 @@ class Server extends AbstractServer
      */
     public function getServiceMap()
     {
-        if (null === $this->_serviceMap) {
-            $this->_serviceMap = new Smd();
+        if (null === $this->serviceMap) {
+            $this->serviceMap = new Smd();
         }
-        return $this->_serviceMap;
+        return $this->serviceMap;
     }
 
     /**
@@ -459,20 +463,20 @@ class Server extends AbstractServer
      */
     protected function _getSmdMethods()
     {
-        if (null === $this->_smdMethods) {
-            $this->_smdMethods = array();
+        if (null === $this->smdMethods) {
+            $this->smdMethods = array();
             $methods = get_class_methods('Zend\\Json\\Server\\Smd');
-            foreach ($methods as $key => $method) {
+            foreach ($methods as $method) {
                 if (!preg_match('/^(set|get)/', $method)) {
                     continue;
                 }
                 if (strstr($method, 'Service')) {
                     continue;
                 }
-                $this->_smdMethods[] = $method;
+                $this->smdMethods[] = $method;
             }
         }
-        return $this->_smdMethods;
+        return $this->smdMethods;
     }
 
     /**
@@ -508,7 +512,7 @@ class Server extends AbstractServer
         }
 
         //Make sure named parameters are passed in correct order
-        if ( is_string( key( $params ) ) ) {
+        if (is_string( key( $params ) )) {
 
             $callback = $invocable->getCallback();
             if ('function' == $callback->getType()) {
@@ -522,10 +526,10 @@ class Server extends AbstractServer
             }
 
             $orderedParams = array();
-            foreach( $reflection->getParameters() as $refParam ) {
-                if( isset( $params[ $refParam->getName() ] ) ) {
+            foreach ($reflection->getParameters() as $refParam) {
+                if (isset( $params[ $refParam->getName() ] )) {
                     $orderedParams[ $refParam->getName() ] = $params[ $refParam->getName() ];
-                } elseif( $refParam->isOptional() ) {
+                } elseif ($refParam->isOptional()) {
                     $orderedParams[ $refParam->getName() ] = null;
                 } else {
                     return $this->fault('Invalid params', Error::ERROR_INVALID_PARAMS);

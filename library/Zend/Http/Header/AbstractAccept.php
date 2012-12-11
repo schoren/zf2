@@ -10,6 +10,8 @@
 
 namespace Zend\Http\Header;
 
+use stdClass;
+
 /**
  * Abstract Accept Header
  *
@@ -118,7 +120,7 @@ abstract class AbstractAccept implements HeaderInterface
      * Parse the accept params belonging to a media range
      *
      * @param string $fieldValuePart
-     * @return StdClass
+     * @return stdClass
      */
     protected function parseFieldValuePart($fieldValuePart)
     {
@@ -151,7 +153,8 @@ abstract class AbstractAccept implements HeaderInterface
     /**
      * Parse the keys contained in the header line
      *
-     * @param string mediaType
+     * @param string $fieldValuePart
+     * @return array
      */
     protected function getParametersFromFieldValuePart($fieldValuePart)
     {
@@ -183,6 +186,7 @@ abstract class AbstractAccept implements HeaderInterface
     /**
      * Get field value
      *
+     * @param array|null $values
      * @return string
      */
     public function getFieldValue($values = null)
@@ -203,12 +207,12 @@ abstract class AbstractAccept implements HeaderInterface
 
 
     /**
-     * Assemble and escape the field value parameters based on RFC 2616 secion 2.1
+     * Assemble and escape the field value parameters based on RFC 2616 section 2.1
      *
      * @todo someone should review this thoroughly
-     * @param string value
+     * @param string $value
      * @param string $key
-     * @return void
+     * @return string
      */
     protected function assembleAcceptParam(&$value, $key)
     {
@@ -216,9 +220,11 @@ abstract class AbstractAccept implements HeaderInterface
                             '/', '[', ']', '?', '=', '{', '}',  ' ',  "\t");
 
         $escaped = preg_replace_callback('/[[:cntrl:]"\\\\]/', // escape cntrl, ", \
-                                         function($v) { return '\\' . $v[0]; },
-                                         $value
-                    );
+            function ($v) {
+                return '\\' . $v[0];
+            },
+            $value
+        );
 
         if ($escaped == $value && !array_intersect(str_split($value), $separators)) {
             $value = $key . '=' . $value;
@@ -235,6 +241,7 @@ abstract class AbstractAccept implements HeaderInterface
      * @param  string $type
      * @param  int|float $priority
      * @param  array (optional) $params
+     * @throws Exception\InvalidArgumentException
      * @return Accept
      */
     protected function addType($type, $priority = 1, array $params = array())
@@ -274,7 +281,7 @@ abstract class AbstractAccept implements HeaderInterface
     /**
      * Does the header have the requested type?
      *
-     * @param  string $type
+     * @param  array|string $matchAgainst
      * @return bool
      */
     protected function hasType($matchAgainst)
@@ -286,7 +293,7 @@ abstract class AbstractAccept implements HeaderInterface
      * Match a media string against this header
      *
      * @param array|string $matchAgainst
-     * @return array|boolean The matched value or false
+     * @return AcceptFieldValuePart|boolean The matched value or false
      */
     public function match($matchAgainst)
     {
@@ -297,8 +304,10 @@ abstract class AbstractAccept implements HeaderInterface
         foreach ($this->getPrioritized() as $left) {
             foreach ($matchAgainst as $right) {
                 if ($right->type == '*' || $left->type == '*') {
-                    if ($res = $this->matchAcceptParams($left, $right)) {
-                        return $res;
+                    if ($this->matchAcceptParams($left, $right)) {
+                        $left->setMatchedAgainst($right);
+
+                        return $left;
                     }
                 }
 
@@ -308,8 +317,10 @@ abstract class AbstractAccept implements HeaderInterface
                             ($left->format == $right->format ||
                                     $right->format == '*' || $left->format == '*')))
                     {
-                        if ($res = $this->matchAcceptParams($left, $right)) {
-                            return $res;
+                        if ($this->matchAcceptParams($left, $right)) {
+                            $left->setMatchedAgainst($right);
+
+                            return $left;
                         }
                     }
                 }
@@ -366,7 +377,7 @@ abstract class AbstractAccept implements HeaderInterface
     /**
      * Add a key/value combination to the internal queue
      *
-     * @param unknown_type $value
+     * @param stdClass $value
      * @return number
      */
     protected function addFieldValuePartToQueue($value)
@@ -396,8 +407,7 @@ abstract class AbstractAccept implements HeaderInterface
      */
     protected function sortFieldValueParts()
     {
-        $sort = function($a, $b) // If A has higher prio than B, return -1.
-        {
+        $sort = function ($a, $b) { // If A has higher prio than B, return -1.
             if ($a->priority > $b->priority) {
                 return -1;
             } elseif ($a->priority < $b->priority) {

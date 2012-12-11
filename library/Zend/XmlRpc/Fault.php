@@ -29,25 +29,25 @@ class Fault
      * Fault code
      * @var int
      */
-    protected $_code;
+    protected $code;
 
     /**
      * Fault character encoding
      * @var string
      */
-    protected $_encoding = 'UTF-8';
+    protected $encoding = 'UTF-8';
 
     /**
      * Fault message
      * @var string
      */
-    protected $_message;
+    protected $message;
 
     /**
      * Internal fault codes => messages
      * @var array
      */
-    protected $_internal = array(
+    protected $internal = array(
         404 => 'Unknown Error',
 
         // 610 - 619 reflection errors
@@ -84,15 +84,14 @@ class Fault
     /**
      * Constructor
      *
-     * @return void
      */
     public function __construct($code = 404, $message = '')
     {
         $this->setCode($code);
         $code = $this->getCode();
 
-        if (empty($message) && isset($this->_internal[$code])) {
-            $message = $this->_internal[$code];
+        if (empty($message) && isset($this->internal[$code])) {
+            $message = $this->internal[$code];
         } elseif (empty($message)) {
             $message = 'Unknown error';
         }
@@ -107,7 +106,7 @@ class Fault
      */
     public function setCode($code)
     {
-        $this->_code = (int) $code;
+        $this->code = (int) $code;
         return $this;
     }
 
@@ -118,7 +117,7 @@ class Fault
      */
     public function getCode()
     {
-        return $this->_code;
+        return $this->code;
     }
 
     /**
@@ -129,7 +128,7 @@ class Fault
      */
     public function setMessage($message)
     {
-        $this->_message = (string) $message;
+        $this->message = (string) $message;
         return $this;
     }
 
@@ -140,7 +139,7 @@ class Fault
      */
     public function getMessage()
     {
-        return $this->_message;
+        return $this->message;
     }
 
     /**
@@ -151,7 +150,7 @@ class Fault
      */
     public function setEncoding($encoding)
     {
-        $this->_encoding = $encoding;
+        $this->encoding = $encoding;
         AbstractValue::setEncoding($encoding);
         return $this;
     }
@@ -163,7 +162,7 @@ class Fault
      */
     public function getEncoding()
     {
-        return $this->_encoding;
+        return $this->encoding;
     }
 
     /**
@@ -219,8 +218,8 @@ class Fault
         }
 
         if (empty($message)) {
-            if (isset($this->_internal[$code])) {
-                $message = $this->_internal[$code];
+            if (isset($this->internal[$code])) {
+                $message = $this->internal[$code];
             } else {
                 $message = 'Unknown Error';
             }

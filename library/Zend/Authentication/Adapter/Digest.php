@@ -11,6 +11,7 @@
 namespace Zend\Authentication\Adapter;
 
 use Zend\Authentication\Result as AuthenticationResult;
+use Zend\Stdlib\ErrorHandler;
 
 /**
  * @category   Zend
@@ -24,28 +25,28 @@ class Digest implements AdapterInterface
      *
      * @var string
      */
-    protected $_filename;
+    protected $filename;
 
     /**
      * Digest authentication realm
      *
      * @var string
      */
-    protected $_realm;
+    protected $realm;
 
     /**
      * Digest authentication user
      *
      * @var string
      */
-    protected $_username;
+    protected $username;
 
     /**
      * Password for the user of the realm
      *
      * @var string
      */
-    protected $_password;
+    protected $password;
 
     /**
      * Sets adapter options
@@ -73,7 +74,7 @@ class Digest implements AdapterInterface
      */
     public function getFilename()
     {
-        return $this->_filename;
+        return $this->filename;
     }
 
     /**
@@ -84,7 +85,7 @@ class Digest implements AdapterInterface
      */
     public function setFilename($filename)
     {
-        $this->_filename = (string) $filename;
+        $this->filename = (string) $filename;
         return $this;
     }
 
@@ -95,7 +96,7 @@ class Digest implements AdapterInterface
      */
     public function getRealm()
     {
-        return $this->_realm;
+        return $this->realm;
     }
 
     /**
@@ -106,7 +107,7 @@ class Digest implements AdapterInterface
      */
     public function setRealm($realm)
     {
-        $this->_realm = (string) $realm;
+        $this->realm = (string) $realm;
         return $this;
     }
 
@@ -117,7 +118,7 @@ class Digest implements AdapterInterface
      */
     public function getUsername()
     {
-        return $this->_username;
+        return $this->username;
     }
 
     /**
@@ -128,7 +129,7 @@ class Digest implements AdapterInterface
      */
     public function setUsername($username)
     {
-        $this->_username = (string) $username;
+        $this->username = (string) $username;
         return $this;
     }
 
@@ -139,7 +140,7 @@ class Digest implements AdapterInterface
      */
     public function getPassword()
     {
-        return $this->_password;
+        return $this->password;
     }
 
     /**
@@ -150,7 +151,7 @@ class Digest implements AdapterInterface
      */
     public function setPassword($password)
     {
-        $this->_password = (string) $password;
+        $this->password = (string) $password;
         return $this;
     }
 
@@ -164,30 +165,37 @@ class Digest implements AdapterInterface
     {
         $optionsRequired = array('filename', 'realm', 'username', 'password');
         foreach ($optionsRequired as $optionRequired) {
-            if (null === $this->{"_$optionRequired"}) {
+            if (null === $this->$optionRequired) {
                 throw new Exception\RuntimeException("Option '$optionRequired' must be set before authentication");
             }
         }
 
-        if (false === ($fileHandle = @fopen($this->_filename, 'r'))) {
-            throw new Exception\UnexpectedValueException("Cannot open '$this->_filename' for reading");
+        ErrorHandler::start(E_WARNING);
+        $fileHandle = fopen($this->filename, 'r');
+        $error      = ErrorHandler::stop();
+        if (false === $fileHandle) {
+            throw new Exception\UnexpectedValueException("Cannot open '$this->filename' for reading", 0, $error);
         }
 
-        $id       = "$this->_username:$this->_realm";
+        $id       = "$this->username:$this->realm";
         $idLength = strlen($id);
 
         $result = array(
             'code'  => AuthenticationResult::FAILURE,
             'identity' => array(
-                'realm'    => $this->_realm,
-                'username' => $this->_username,
+                'realm'    => $this->realm,
+                'username' => $this->username,
                 ),
             'messages' => array()
             );
 
-        while ($line = trim(fgets($fileHandle))) {
+        while (($line = fgets($fileHandle)) !== false) {
+            $line = trim($line);
+            if (empty($line)) {
+                break;
+            }
             if (substr($line, 0, $idLength) === $id) {
-                if ($this->_secureStringCompare(substr($line, -32), md5("$this->_username:$this->_realm:$this->_password"))) {
+                if ($this->_secureStringCompare(substr($line, -32), md5("$this->username:$this->realm:$this->password"))) {
                     $result['code'] = AuthenticationResult::SUCCESS;
                 } else {
                     $result['code'] = AuthenticationResult::FAILURE_CREDENTIAL_INVALID;
@@ -198,7 +206,7 @@ class Digest implements AdapterInterface
         }
 
         $result['code'] = AuthenticationResult::FAILURE_IDENTITY_NOT_FOUND;
-        $result['messages'][] = "Username '$this->_username' and realm '$this->_realm' combination not found";
+        $result['messages'][] = "Username '$this->username' and realm '$this->realm' combination not found";
         return new AuthenticationResult($result['code'], $result['identity'], $result['messages']);
     }
 

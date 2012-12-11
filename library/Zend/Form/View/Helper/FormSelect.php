@@ -10,8 +10,8 @@
 
 namespace Zend\Form\View\Helper;
 
-use Traversable;
 use Zend\Form\ElementInterface;
+use Zend\Form\Element\Select as SelectElement;
 use Zend\Form\Exception;
 
 /**
@@ -56,38 +56,35 @@ class FormSelect extends AbstractHelper
      * Render a form <select> element from the provided $element
      *
      * @param  ElementInterface $element
+     * @throws Exception\InvalidArgumentException
+     * @throws Exception\DomainException
      * @return string
      */
     public function render(ElementInterface $element)
     {
+        if (!$element instanceof SelectElement) {
+            throw new Exception\InvalidArgumentException(sprintf(
+                '%s requires that the element is of type Zend\Form\Element\Select',
+                __METHOD__
+            ));
+        }
+
         $name   = $element->getName();
-        if (empty($name)) {
+        if (empty($name) && $name !== 0) {
             throw new Exception\DomainException(sprintf(
                 '%s requires that the element has an assigned name; none discovered',
                 __METHOD__
             ));
         }
 
-        $attributes = $element->getAttributes();
+        $options = $element->getValueOptions();
 
-        if (!isset($attributes['options'])
-            || (!is_array($attributes['options']) && !$attributes['options'] instanceof Traversable)
-        ) {
-            throw new Exception\DomainException(sprintf(
-                '%s requires that the element has an array or Traversable "options" attribute; none found',
-                __METHOD__
-            ));
+        if (($emptyOption = $element->getEmptyOption()) !== null) {
+            $options = array('' => $emptyOption) + $options;
         }
 
-        $options = (array) $attributes['options'];
-        unset($attributes['options']);
-
-        $value = array();
-        if (isset($attributes['value'])) {
-            $value = $attributes['value'];
-            $value = $this->validateMultiValue($value, $attributes);
-            unset($attributes['value']);
-        };
+        $attributes = $element->getAttributes();
+        $value      = $this->validateMultiValue($element->getValue(), $attributes);
 
         $attributes['name'] = $name;
         if (array_key_exists('multiple', $attributes) && $attributes['multiple']) {
@@ -245,6 +242,10 @@ class FormSelect extends AbstractHelper
      */
     protected function validateMultiValue($value, array $attributes)
     {
+        if (null === $value) {
+            return array();
+        }
+
         if (!is_array($value)) {
             return (array) $value;
         }

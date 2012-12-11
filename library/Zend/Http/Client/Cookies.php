@@ -13,7 +13,6 @@ namespace Zend\Http\Client;
 use ArrayIterator;
 use Zend\Http\Header\Cookie;
 use Zend\Http\Response;
-use Zend\Stdlib\ParametersInterface;
 use Zend\Uri;
 
 /**
@@ -81,7 +80,7 @@ class Cookies
      *
      * @var array
      */
-    protected $_rawCookies = array();
+    protected $rawCookies = array();
 
     /**
      * Construct
@@ -96,6 +95,7 @@ class Cookies
      *
      * @param Cookie|string $cookie
      * @param Uri\Uri|string    $ref_uri Optional reference URI (for domain, path, secure)
+     * @throws Exception\InvalidArgumentException if invalid $cookie value
      */
     public function addCookie($cookie, $ref_uri = null)
     {
@@ -113,7 +113,7 @@ class Cookies
                 $this->cookies[$domain][$path] = array();
             }
             $this->cookies[$domain][$path][$cookie->getName()] = $cookie;
-            $this->_rawCookies[] = $cookie;
+            $this->rawCookies[] = $cookie;
         } else {
             throw new Exception\InvalidArgumentException('Supplient argument is not a valid cookie string or object');
         }
@@ -159,6 +159,7 @@ class Cookies
      * @param boolean $matchSessionCookies Whether to send session cookies
      * @param int $ret_as Whether to return cookies as objects of \Zend\Http\Header\Cookie or as strings
      * @param int $now Override the current time when checking for expiry time
+     * @throws Exception\InvalidArgumentException if invalid URI
      * @return array|string
      */
     public function getMatchingCookies($uri, $matchSessionCookies = true,
@@ -180,7 +181,7 @@ class Cookies
         $cookies = $this->_matchPath($cookies, $uri->getPath());
         $cookies = $this->_flattenCookiesArray($cookies, self::COOKIE_OBJECT);
 
-        // Next, run Cookie->match on all cookies to check secure, time and session mathcing
+        // Next, run Cookie->match on all cookies to check secure, time and session matching
         $ret = array();
         foreach ($cookies as $cookie)
             if ($cookie->match($uri, $matchSessionCookies, $now))
@@ -198,6 +199,7 @@ class Cookies
      * @param Uri\Uri|string $uri The uri (domain and path) to match
      * @param string $cookie_name The cookie's name
      * @param int $ret_as Whether to return cookies as objects of \Zend\Http\Header\Cookie or as strings
+     * @throws Exception\InvalidArgumentException if invalid URI specified or invalid $ret_as value
      * @return Cookie|string
      */
     public function getCookie($uri, $cookie_name, $ret_as = self::COOKIE_OBJECT)
@@ -241,7 +243,7 @@ class Cookies
     }
 
     /**
-     * Helper function to recursivly flatten an array. Shoud be used when exporting the
+     * Helper function to recursively flatten an array. Should be used when exporting the
      * cookies array (or parts of it)
      *
      * @param \Zend\Http\Header\Cookie|array $ptr
@@ -302,7 +304,7 @@ class Cookies
     /**
      * Return a subset of a domain-matching cookies that also match a specified path
      *
-     * @param array $dom_array
+     * @param array $domains
      * @param string $path
      * @return array
      */
@@ -350,7 +352,7 @@ class Cookies
      */
     public function count()
     {
-        return count($this->_rawCookies);
+        return count($this->rawCookies);
     }
 
     /**
@@ -360,7 +362,7 @@ class Cookies
      */
     public function getIterator()
     {
-        return new ArrayIterator($this->_rawCookies);
+        return new ArrayIterator($this->rawCookies);
     }
 
     /**
@@ -380,7 +382,7 @@ class Cookies
      */
     public function reset()
     {
-        $this->cookies = $this->_rawCookies = array();
+        $this->cookies = $this->rawCookies = array();
         return $this;
     }
 

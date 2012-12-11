@@ -20,7 +20,7 @@ use Zend\Stdlib\RequestInterface as Request;
  *
  * @package    Zend_Mvc_Router
  * @subpackage Http
- * @see        http://manuals.rubyonrails.com/read/chapter/65
+ * @see        http://guides.rubyonrails.org/routing.html
  */
 class Hostname implements RouteInterface
 {
@@ -150,7 +150,7 @@ class Hostname implements RouteInterface
         if (isset($options['uri'])) {
             $parts = array();
 
-            foreach ($this->route as $index => $routePart) {
+            foreach ($this->route as $routePart) {
                 if (preg_match('(^:(?P<name>.+)$)', $routePart, $matches)) {
                     if (!isset($mergedParams[$matches['name']])) {
                         throw new Exception\InvalidArgumentException(sprintf('Missing parameter "%s"', $matches['name']));

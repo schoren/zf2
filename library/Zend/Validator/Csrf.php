@@ -11,6 +11,7 @@
 namespace Zend\Validator;
 
 use Traversable;
+use Zend\Math\Rand;
 use Zend\Session\Container as SessionContainer;
 use Zend\Stdlib\ArrayUtils;
 
@@ -64,7 +65,7 @@ class Csrf extends AbstractValidator
 
     /**
      * TTL for CSRF token
-     * @var int
+     * @var int|null
      */
     protected $timeout = 300;
 
@@ -75,7 +76,7 @@ class Csrf extends AbstractValidator
      */
     public function __construct($options = array())
     {
-        parent::__construct();
+        parent::__construct($options);
 
         if ($options instanceof Traversable) {
             $options = ArrayUtils::iteratorToArray($options);
@@ -204,7 +205,7 @@ class Csrf extends AbstractValidator
     /**
      * Retrieve CSRF token
      *
-     * If no CSRF token currently exists, or should be regenrated,
+     * If no CSRF token currently exists, or should be regenerated,
      * generates one.
      *
      * @param  bool $regenerate    default false
@@ -234,18 +235,20 @@ class Csrf extends AbstractValidator
      */
     public function getSessionName()
     {
-        return str_replace('\\', '_', __CLASS__) . '_' . $this->getSalt() . '_' . $this->getName();
+        return str_replace('\\', '_', __CLASS__) . '_'
+            . $this->getSalt() . '_'
+            . strtr($this->getName(), array('[' => '_', ']' => ''));
     }
 
     /**
      * Set timeout for CSRF session token
      *
-     * @param  int $ttl
+     * @param  int|null $ttl
      * @return Csrf
      */
     public function setTimeout($ttl)
     {
-        $this->timeout = (int) $ttl;
+        $this->timeout = ($ttl !== null) ? (int)$ttl : null;
         return $this;
     }
 
@@ -268,7 +271,10 @@ class Csrf extends AbstractValidator
     {
         $session = $this->getSession();
         //$session->setExpirationHops(1, null, true);
-        $session->setExpirationSeconds($this->getTimeout());
+        $timeout = $this->getTimeout();
+        if (null !== $timeout) {
+            $session->setExpirationSeconds($timeout);
+        }
         $session->hash = $this->getHash();
     }
 
@@ -285,12 +291,7 @@ class Csrf extends AbstractValidator
         if (isset(static::$hashCache[$this->getSessionName()])) {
             $this->hash = static::$hashCache[$this->getSessionName()];
         } else {
-            $this->hash = md5(
-                mt_rand(1,1000000)
-                .  $this->getSalt()
-                .  $this->getName()
-                .  mt_rand(1,1000000)
-            );
+            $this->hash = md5($this->getSalt() . Rand::getBytes(32) .  $this->getName());
             static::$hashCache[$this->getSessionName()] = $this->hash;
         }
         $this->setValue($this->hash);

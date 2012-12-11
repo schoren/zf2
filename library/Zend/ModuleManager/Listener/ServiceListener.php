@@ -12,8 +12,6 @@ namespace Zend\ModuleManager\Listener;
 
 use Traversable;
 use Zend\EventManager\EventManagerInterface;
-use Zend\EventManager\ListenerAggregateInterface;
-use Zend\ModuleManager\Feature\ServiceProviderInterface;
 use Zend\ModuleManager\ModuleEvent;
 use Zend\ServiceManager\Config as ServiceConfig;
 use Zend\ServiceManager\ServiceManager;
@@ -24,13 +22,8 @@ use Zend\Stdlib\ArrayUtils;
  * @package    Zend_ModuleManager
  * @subpackage Listener
  */
-class ServiceListener implements ListenerAggregateInterface
+class ServiceListener implements ServiceListenerInterface
 {
-    /**
-     * @var bool
-     */
-    protected $configured = false;
-
     /**
      * @var \Zend\Stdlib\CallbackHandler[]
      */
@@ -55,16 +48,34 @@ class ServiceListener implements ListenerAggregateInterface
 
     /**
      * @param ServiceManager $serviceManager
+     * @param null|array $configuration
      */
     public function __construct(ServiceManager $serviceManager, $configuration = null)
     {
         $this->defaultServiceManager = $serviceManager;
-        $this->defaultServiceConfig = $configuration;
+
+        if ($configuration !== null) {
+            $this->setDefaultServiceConfig($configuration);
+        }
     }
 
     /**
-     * @param string $key
-     * @param ServiceManager|string $serviceManager
+     * @param  array $configuration
+     * @return ServiceListener
+     */
+    public function setDefaultServiceConfig($configuration)
+    {
+        $this->defaultServiceConfig  = $configuration;
+
+        return $this;
+    }
+
+    /**
+     * @param  ServiceManager|string $serviceManager  Service Manager instance or name
+     * @param  string                $key             Configuration key
+     * @param  string                $moduleInterface FQCN as string
+     * @param  string                $method          Method name
+     * @throws Exception\RuntimeException
      * @return ServiceListener
      */
     public function addServiceManager($serviceManager, $key, $moduleInterface, $method)
@@ -123,10 +134,13 @@ class ServiceListener implements ListenerAggregateInterface
      * Retrieve service manager configuration from module, and
      * configure the service manager.
      *
-     * If the module does not implement ServiceProviderInterface and does not
-     * implement the "getServiceConfig()" method, does nothing. Also,
-     * if the return value of that method is not a ServiceConfig object,
-     * or not an array or Traversable that can seed one, does nothing.
+     * If the module does not implement a specific interface and does not
+     * implement a specific method, does nothing. Also, if the return value
+     * of that method is not a ServiceConfig object, or not an array or
+     * Traversable that can seed one, does nothing.
+     *
+     * The interface and method name can be set by adding a new service manager
+     * via the addServiceManager() method.
      *
      * @param  ModuleEvent $e
      * @return void
@@ -158,10 +172,11 @@ class ServiceListener implements ListenerAggregateInterface
                 continue;
             }
 
-            // We're keeping track of which modules provided which configuration to which serivce managers.
+            // We're keeping track of which modules provided which configuration to which service managers.
             // The actual merging takes place later. Doing it this way will enable us to provide more powerful
             // debugging tools for showing which modules overrode what.
-            $this->serviceManagers[$key]['configuration'][$e->getModuleName() . '::' . $sm['module_class_method'] . '()'] = $config;
+            $fullname = $e->getModuleName() . '::' . $sm['module_class_method'] . '()';
+            $this->serviceManagers[$key]['configuration'][$fullname] = $config;
         }
     }
 
@@ -173,6 +188,7 @@ class ServiceListener implements ListenerAggregateInterface
      * used to configure the service manager.
      *
      * @param  ModuleEvent $e
+     * @throws Exception\RuntimeException
      * @return void
      */
     public function onLoadModulesPost(ModuleEvent $e)
@@ -212,8 +228,6 @@ class ServiceListener implements ListenerAggregateInterface
             $serviceConfig = new ServiceConfig($smConfig);
             $serviceConfig->configureServiceManager($sm['service_manager']);
         }
-
-        $this->configured = true;
     }
 
     /**
@@ -223,6 +237,7 @@ class ServiceListener implements ListenerAggregateInterface
      * the internal service configuration.
      *
      * @param  ServiceConfig|string $config Instance of ServiceConfig or class name
+     * @throws Exception\RuntimeException
      * @return array
      */
     protected function serviceConfigToArray($config)

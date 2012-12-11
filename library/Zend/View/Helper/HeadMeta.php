@@ -10,6 +10,7 @@
 
 namespace Zend\View\Helper;
 
+use stdClass;
 use Zend\View;
 use Zend\View\Exception;
 
@@ -26,21 +27,20 @@ class HeadMeta extends Placeholder\Container\AbstractStandalone
      * Types of attributes
      * @var array
      */
-    protected $_typeKeys     = array('name', 'http-equiv', 'charset', 'property');
-    protected $_requiredKeys = array('content');
-    protected $_modifierKeys = array('lang', 'scheme');
+    protected $typeKeys     = array('name', 'http-equiv', 'charset', 'property');
+    protected $requiredKeys = array('content');
+    protected $modifierKeys = array('lang', 'scheme');
 
     /**
      * @var string registry key
      */
-    protected $_regKey = 'Zend_View_Helper_HeadMeta';
+    protected $regKey = 'Zend_View_Helper_HeadMeta';
 
     /**
      * Constructor
      *
      * Set separator to PHP_EOL
      *
-     * @return void
      */
     public function __construct()
     {
@@ -79,13 +79,13 @@ class HeadMeta extends Placeholder\Container\AbstractStandalone
     }
 
     /**
-     * Normalize type attribut of meta
+     * Normalize type attribute of meta
      *
-     * @param $type type in CamelCase
+     * @param string $type type in CamelCase
      * @return string
      * @throws Exception\DomainException
      */
-    protected function _normalizeType($type)
+    protected function normalizeType($type)
     {
         switch ($type) {
             case 'Name':
@@ -96,7 +96,7 @@ class HeadMeta extends Placeholder\Container\AbstractStandalone
                 return 'property';
             default:
                 throw new Exception\DomainException(sprintf(
-                    'Invalid type "%s" passed to _normalizeType',
+                    'Invalid type "%s" passed to normalizeType',
                     $type
                 ));
         }
@@ -107,11 +107,11 @@ class HeadMeta extends Placeholder\Container\AbstractStandalone
      *
      * Allows the following 'virtual' methods:
      * - appendName($keyValue, $content, $modifiers = array())
-     * - offsetGetName($index, $keyValue, $content, $modifers = array())
+     * - offsetGetName($index, $keyValue, $content, $modifiers = array())
      * - prependName($keyValue, $content, $modifiers = array())
      * - setName($keyValue, $content, $modifiers = array())
      * - appendHttpEquiv($keyValue, $content, $modifiers = array())
-     * - offsetGetHttpEquiv($index, $keyValue, $content, $modifers = array())
+     * - offsetGetHttpEquiv($index, $keyValue, $content, $modifiers = array())
      * - prependHttpEquiv($keyValue, $content, $modifiers = array())
      * - setHttpEquiv($keyValue, $content, $modifiers = array())
      * - appendProperty($keyValue, $content, $modifiers = array())
@@ -128,7 +128,7 @@ class HeadMeta extends Placeholder\Container\AbstractStandalone
     {
         if (preg_match('/^(?P<action>set|(pre|ap)pend|offsetSet)(?P<type>Name|HttpEquiv|Property)$/', $method, $matches)) {
             $action = $matches['action'];
-            $type   = $this->_normalizeType($matches['type']);
+            $type   = $this->normalizeType($matches['type']);
             $argc   = count($args);
             $index  = null;
 
@@ -172,7 +172,7 @@ class HeadMeta extends Placeholder\Container\AbstractStandalone
      */
     public function setCharset($charset)
     {
-        $item = new \stdClass;
+        $item = new stdClass;
         $item->type = 'charset';
         $item->charset = $charset;
         $item->content = null;
@@ -187,9 +187,9 @@ class HeadMeta extends Placeholder\Container\AbstractStandalone
      * @param  mixed $item
      * @return boolean
      */
-    protected function _isValid($item)
+    protected function isValid($item)
     {
-        if ((!$item instanceof \stdClass)
+        if ((!$item instanceof stdClass)
             || !isset($item->type)
             || !isset($item->modifiers))
         {
@@ -220,7 +220,7 @@ class HeadMeta extends Placeholder\Container\AbstractStandalone
      */
     public function append($value)
     {
-        if (!$this->_isValid($value)) {
+        if (!$this->isValid($value)) {
             throw new Exception\InvalidArgumentException(
                 'Invalid value passed to append; please use appendMeta()'
             );
@@ -239,7 +239,7 @@ class HeadMeta extends Placeholder\Container\AbstractStandalone
      */
     public function offsetSet($index, $value)
     {
-        if (!$this->_isValid($value)) {
+        if (!$this->isValid($value)) {
             throw  new Exception\InvalidArgumentException(
                 'Invalid value passed to offsetSet; please use offsetSetName() or offsetSetHttpEquiv()'
             );
@@ -273,7 +273,7 @@ class HeadMeta extends Placeholder\Container\AbstractStandalone
      */
     public function prepend($value)
     {
-        if (!$this->_isValid($value)) {
+        if (!$this->isValid($value)) {
             throw new Exception\InvalidArgumentException(
                 'Invalid value passed to prepend; please use prependMeta()'
             );
@@ -291,7 +291,7 @@ class HeadMeta extends Placeholder\Container\AbstractStandalone
      */
     public function set($value)
     {
-        if (!$this->_isValid($value)) {
+        if (!$this->isValid($value)) {
             throw new Exception\InvalidArgumentException('Invalid value passed to set; please use setMeta()');
         }
 
@@ -308,16 +308,13 @@ class HeadMeta extends Placeholder\Container\AbstractStandalone
     /**
      * Build meta HTML string
      *
-     * @param  string $type
-     * @param  string $typeValue
-     * @param  string $content
-     * @param  array $modifiers
-     * @return string
+     * @param  stdClass $item
      * @throws Exception\InvalidArgumentException
+     * @return string
      */
-    public function itemToString(\stdClass $item)
+    public function itemToString(stdClass $item)
     {
-        if (!in_array($item->type, $this->_typeKeys)) {
+        if (!in_array($item->type, $this->typeKeys)) {
             throw new Exception\InvalidArgumentException(sprintf(
                 'Invalid type "%s" provided for meta',
                 $item->type
@@ -334,10 +331,16 @@ class HeadMeta extends Placeholder\Container\AbstractStandalone
                     'Invalid modifier "scheme" provided; not supported by HTML5'
                 );
             }
-            if (!in_array($key, $this->_modifierKeys)) {
+            if (!in_array($key, $this->modifierKeys)) {
                 continue;
             }
-            $modifiersString .= $key . '="' . $this->_escape($value) . '" ';
+            $modifiersString .= $key . '="' . $this->escape($value) . '" ';
+        }
+
+        $modifiersString = rtrim($modifiersString);
+
+        if ('' != $modifiersString) {
+            $modifiersString = ' ' . $modifiersString;
         }
 
         if (method_exists($this->view, 'plugin')) {
@@ -348,19 +351,19 @@ class HeadMeta extends Placeholder\Container\AbstractStandalone
                     ? '<meta %s="%s"/>'
                     : '<meta %s="%s">';
             } elseif ($this->view->plugin('doctype')->isXhtml()) {
-                $tpl = '<meta %s="%s" content="%s" %s/>';
+                $tpl = '<meta %s="%s" content="%s"%s />';
             } else {
-                $tpl = '<meta %s="%s" content="%s" %s>';
+                $tpl = '<meta %s="%s" content="%s"%s>';
             }
         } else {
-            $tpl = '<meta %s="%s" content="%s" %s/>';
+            $tpl = '<meta %s="%s" content="%s"%s />';
         }
 
         $meta = sprintf(
             $tpl,
             $type,
-            $this->_escape($item->$type),
-            $this->_escape($item->content),
+            $this->escape($item->$type),
+            $this->escape($item->content),
             $modifiersString
         );
 
@@ -368,7 +371,7 @@ class HeadMeta extends Placeholder\Container\AbstractStandalone
             && !empty($item->modifiers['conditional'])
             && is_string($item->modifiers['conditional']))
         {
-            $meta = '<!--[if ' . $this->_escape($item->modifiers['conditional']) . ']>' . $meta . '<![endif]-->';
+            $meta = '<!--[if ' . $this->escape($item->modifiers['conditional']) . ']>' . $meta . '<![endif]-->';
         }
 
         return $meta;
@@ -396,7 +399,7 @@ class HeadMeta extends Placeholder\Container\AbstractStandalone
             trigger_error($e->getMessage(), E_USER_WARNING);
             return '';
         }
-        return $indent . implode($this->_escape($this->getSeparator()) . $indent, $items);
+        return $indent . implode($this->escape($this->getSeparator()) . $indent, $items);
     }
 
     /**
@@ -410,7 +413,7 @@ class HeadMeta extends Placeholder\Container\AbstractStandalone
      */
     public function createData($type, $typeValue, $content, array $modifiers)
     {
-        $data            = new \stdClass;
+        $data            = new stdClass;
         $data->type      = $type;
         $data->$type     = $typeValue;
         $data->content   = $content;
