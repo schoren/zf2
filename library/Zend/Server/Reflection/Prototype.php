@@ -24,13 +24,13 @@ class Prototype
     /**
      * Constructor
      *
-     * @param Zend\Server\Reflection\ReflectionReturnValue $return
+     * @param ReflectionReturnValue $return
      * @param array $params
-     * @return void
+     * @throws Exception\InvalidArgumentException
      */
     public function __construct(ReflectionReturnValue $return, $params = null)
     {
-        $this->_return = $return;
+        $this->return = $return;
 
         if (!is_array($params) && (null !== $params)) {
             throw new Exception\InvalidArgumentException('Invalid parameters');
@@ -44,7 +44,7 @@ class Prototype
             }
         }
 
-        $this->_params = $params;
+        $this->params = $params;
     }
 
     /**
@@ -54,18 +54,18 @@ class Prototype
      */
     public function getReturnType()
     {
-        return $this->_return->getType();
+        return $this->return->getType();
     }
 
     /**
      * Retrieve the return value object
      *
      * @access public
-     * @return Zend\Server\Reflection\ReflectionReturnValue
+     * @return \Zend\Server\Reflection\ReflectionReturnValue
      */
     public function getReturnValue()
     {
-        return $this->_return;
+        return $this->return;
     }
 
     /**
@@ -75,6 +75,6 @@ class Prototype
      */
     public function getParameters()
     {
-        return $this->_params;
+        return $this->params;
     }
 }

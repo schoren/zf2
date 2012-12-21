@@ -11,17 +11,16 @@
 namespace Zend\Form\Element;
 
 use Zend\Form\Element;
-use Zend\InputFilter\InputProviderInterface;
+use Zend\Form\Element\DateTime as DateTimeElement;
 use Zend\Validator\Date as DateValidator;
 use Zend\Validator\DateStep as DateStepValidator;
-use Zend\Validator\ValidatorInterface;
 
 /**
  * @category   Zend
  * @package    Zend_Form
  * @subpackage Element
  */
-class Date extends DateTime
+class Date extends DateTimeElement
 {
     /**
      * Seed attributes
@@ -33,9 +32,17 @@ class Date extends DateTime
     );
 
     /**
+     * Date format to use for DateTime values. By default, this is RFC-3339,
+     * full-date (Y-m-d), which is what HTML5 dictates.
+     *
+     * @var string
+     */
+    protected $format = 'Y-m-d';
+
+    /**
      * Retrieves a Date Validator configured for a DateTime Input type
      *
-     * @return ValidatorInterface
+     * @return \Zend\Validator\ValidatorInterface
      */
     protected function getDateValidator()
     {
@@ -45,7 +52,7 @@ class Date extends DateTime
     /**
      * Retrieves a DateStep Validator configured for a Date Input type
      *
-     * @return ValidatorInterface
+     * @return \Zend\Validator\ValidatorInterface
      */
     protected function getStepValidator()
     {

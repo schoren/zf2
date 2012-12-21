@@ -11,6 +11,7 @@
 namespace Zend\Captcha;
 
 use Zend\Session\Container;
+use Zend\Math\Rand;
 
 /**
  * AbstractWord-based captcha adapter
@@ -136,7 +137,7 @@ abstract class AbstractWord extends AbstractAdapter
     }
 
     /**
-     * Retrieve word length to use when genrating captcha
+     * Retrieve word length to use when generating captcha
      *
      * @return integer
      */
@@ -174,7 +175,7 @@ abstract class AbstractWord extends AbstractAdapter
      * Set captcha identifier
      *
      * @param string $id
-     * return Word
+     * @return AbstractWord
      */
     protected function setId ($id)
     {
@@ -207,7 +208,7 @@ abstract class AbstractWord extends AbstractAdapter
     /**
      * Sets if session should be preserved on generate()
      *
-     * @param $keepSession Should session be kept on generate()?
+     * @param bool $keepSession Should session be kept on generate()?
      * @return AbstractWord
      */
     public function setKeepSession($keepSession)
@@ -241,6 +242,7 @@ abstract class AbstractWord extends AbstractAdapter
     /**
      * Get session object
      *
+     * @throws Exception\InvalidArgumentException
      * @return Container
      */
     public function getSession()
@@ -309,8 +311,8 @@ abstract class AbstractWord extends AbstractAdapter
     {
         $word       = '';
         $wordLen    = $this->getWordLen();
-        $vowels     = $this->useNumbers ? self::$VN : self::$V;
-        $consonants = $this->useNumbers ? self::$CN : self::$C;
+        $vowels     = $this->useNumbers ? static::$VN : static::$V;
+        $consonants = $this->useNumbers ? static::$CN : static::$C;
 
         for ($i=0; $i < $wordLen; $i = $i + 2) {
             // generate word with mix of vowels and consonants
@@ -346,11 +348,11 @@ abstract class AbstractWord extends AbstractAdapter
     /**
      * Generate a random identifier
      *
-     * @return void
+     * @return string
      */
     protected function generateRandomId()
     {
-        return md5(mt_rand(0, 1000) . microtime(true));
+        return md5(Rand::getBytes(32));
     }
 
     /**
@@ -358,15 +360,16 @@ abstract class AbstractWord extends AbstractAdapter
      *
      * @see    Zend\Validator\ValidatorInterface::isValid()
      * @param  mixed $value
+     * @param  mixed $context
      * @return bool
      */
     public function isValid($value, $context = null)
     {
-        if (!is_array($value) && !is_array($context)) {
-            $this->error(self::MISSING_VALUE);
-            return false;
-        }
-        if (!is_array($value) && is_array($context)) {
+        if (!is_array($value)) {
+            if (!is_array($context)) {
+                $this->error(self::MISSING_VALUE);
+                return false;
+            }
             $value = $context;
         }
 

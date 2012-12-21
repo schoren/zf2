@@ -27,16 +27,15 @@ class HelperConfig implements ConfigInterface
      * Configure the provided service manager instance with the configuration
      * in this class.
      *
-     * In addition to using each of the internal properties to configure the
-     * service manager, also adds an initializer to inject ServiceManagerAware
-     * classes with the service manager.
+     * Simply adds a factory for the navigation helper, and has it inject the helper
+     * with the service locator instance.
      *
      * @param  ServiceManager $serviceManager
      * @return void
      */
     public function configureServiceManager(ServiceManager $serviceManager)
     {
-        $serviceManager->setFactory('navigation', function(HelperPluginManager $pm) {
+        $serviceManager->setFactory('navigation', function (HelperPluginManager $pm) {
             $helper = new \Zend\View\Helper\Navigation;
             $helper->setServiceLocator($pm->getServiceLocator());
             return $helper;

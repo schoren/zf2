@@ -12,9 +12,7 @@ namespace Zend\Mvc;
 
 use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\EventManagerInterface;
-use Zend\ModuleManager\ModuleManagerInterface;
 use Zend\ServiceManager\ServiceManager;
-use Zend\Stdlib\RequestInterface;
 use Zend\Stdlib\ResponseInterface;
 
 /**
@@ -76,7 +74,7 @@ class Application implements
     protected $events;
 
     /**
-     * @var RequestInterface
+     * @var \Zend\Stdlib\RequestInterface
      */
     protected $request;
 
@@ -91,11 +89,6 @@ class Application implements
     protected $serviceManager = null;
 
     /**
-     * @var ModuleManagerInterface
-     */
-    protected $moduleManager;
-
-    /**
      * Constructor
      *
      * @param mixed $configuration
@@ -108,7 +101,6 @@ class Application implements
 
         $this->setEventManager($serviceManager->get('EventManager'));
 
-        $this->moduleManager  = $serviceManager->get('ModuleManager');
         $this->request        = $serviceManager->get('Request');
         $this->response       = $serviceManager->get('Response');
     }
@@ -167,7 +159,7 @@ class Application implements
     /**
      * Get the request object
      *
-     * @return RequestInterface
+     * @return \Zend\Stdlib\RequestInterface
      */
     public function getRequest()
     {
@@ -205,7 +197,6 @@ class Application implements
         $eventManager->setIdentifiers(array(
             __CLASS__,
             get_called_class(),
-            'application',
         ));
         $this->events = $eventManager;
         return $this;
@@ -227,8 +218,8 @@ class Application implements
      * Static method for quick and easy initialization of the Application.
      *
      * If you use this init() method, you cannot specify a service with the
-     * name of 'ApplicationConfig' in your service manager config. That
-     * name is reserved to hold the array from application.config.php
+     * name of 'ApplicationConfig' in your service manager config. This name is
+     * reserved to hold the array from application.config.php.
      *
      * The following services can only be overridden from application.config.php:
      *
@@ -289,6 +280,7 @@ class Application implements
             $response = $result->last();
             if ($response instanceof ResponseInterface) {
                 $event->setTarget($this);
+                $event->setResponse($response);
                 $events->trigger(MvcEvent::EVENT_FINISH, $event);
                 return $response;
             }
@@ -308,6 +300,7 @@ class Application implements
         $response = $result->last();
         if ($response instanceof ResponseInterface) {
             $event->setTarget($this);
+            $event->setResponse($response);
             $events->trigger(MvcEvent::EVENT_FINISH, $event);
             return $response;
         }

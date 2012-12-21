@@ -18,7 +18,6 @@ use Zend\Validator\Date as DateValidator;
 use Zend\Validator\DateStep as DateStepValidator;
 use Zend\Validator\GreaterThan as GreaterThanValidator;
 use Zend\Validator\LessThan as LessThanValidator;
-use Zend\Validator\ValidatorInterface;
 
 /**
  * @category   Zend
@@ -27,6 +26,8 @@ use Zend\Validator\ValidatorInterface;
  */
 class DateTime extends Element implements InputProviderInterface
 {
+    const DATETIME_FORMAT = 'Y-m-d\TH:iP';
+
     /**
      * Seed attributes
      *
@@ -37,9 +38,63 @@ class DateTime extends Element implements InputProviderInterface
     );
 
     /**
+     *
+     * Opera and mobile browsers support datetime input, and display a datepicker control
+     * But the submitted value does not include seconds.
+     *
+     * @var string
+     */
+    protected $format = self::DATETIME_FORMAT;
+
+    /**
      * @var array
      */
     protected $validators;
+
+    /**
+     * Retrieve the element value
+     *
+     * If the value is a DateTime object, and $returnFormattedValue is true
+     * (the default), we return the string
+     * representation using the currently registered format.
+     *
+     * If $returnFormattedValue is false, the original value will be
+     * returned, regardless of type.
+     *
+     * @param  bool $returnFormattedValue
+     * @return mixed
+     */
+    public function getValue($returnFormattedValue = true)
+    {
+        $value = parent::getValue();
+        if (!$value instanceof PhpDateTime || !$returnFormattedValue) {
+            return $value;
+        }
+        $format = $this->getFormat();
+        return $value->format($format);
+    }
+
+    /**
+     * Set value for format
+     *
+     * @param  string $format
+     * @return DateTime
+     */
+    public function setFormat($format)
+    {
+        $this->format = (string) $format;
+        return $this;
+    }
+
+    /**
+     * Retrieve the DateTime format to use for the value
+     *
+     * @return string
+     */
+    public function getFormat()
+    {
+        return $this->format;
+    }
 
     /**
      * Get validators
@@ -84,7 +139,7 @@ class DateTime extends Element implements InputProviderInterface
      */
     protected function getDateValidator()
     {
-        return new DateValidator(array('format' => PhpDateTime::ISO8601));
+        return new DateValidator(array('format' => $this->format));
     }
 
     /**
@@ -95,13 +150,13 @@ class DateTime extends Element implements InputProviderInterface
     protected function getStepValidator()
     {
         $stepValue = (isset($this->attributes['step']))
-                     ? $this->attributes['step'] : 1; // Minutes
+                   ? $this->attributes['step'] : 1; // Minutes
 
         $baseValue = (isset($this->attributes['min']))
-                     ? $this->attributes['min'] : '1970-01-01T00:00:00Z';
+                   ? $this->attributes['min'] : '1970-01-01T00:00Z';
 
         return new DateStepValidator(array(
-            'format'    => PhpDateTime::ISO8601,
+            'format'    => $this->format,
             'baseValue' => $baseValue,
             'step'      => new DateInterval("PT{$stepValue}M"),
         ));

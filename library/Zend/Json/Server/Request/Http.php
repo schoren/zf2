@@ -22,19 +22,18 @@ class Http extends JsonRequest
      * Raw JSON pulled from POST body
      * @var string
      */
-    protected $_rawJson;
+    protected $rawJson;
 
     /**
      * Constructor
      *
      * Pull JSON request from raw POST body and use to populate request.
      *
-     * @return void
      */
     public function __construct()
     {
         $json = file_get_contents('php://input');
-        $this->_rawJson = $json;
+        $this->rawJson = $json;
         if (!empty($json)) {
             $this->loadJson($json);
         }
@@ -47,6 +46,6 @@ class Http extends JsonRequest
      */
     public function getRawJson()
     {
-        return $this->_rawJson;
+        return $this->rawJson;
     }
 }

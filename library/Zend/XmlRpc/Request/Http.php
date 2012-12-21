@@ -10,6 +10,7 @@
 
 namespace Zend\XmlRpc\Request;
 
+use Zend\Stdlib\ErrorHandler;
 use Zend\XmlRpc\Fault;
 use Zend\XmlRpc\Request as XmlRpcRequest;
 
@@ -29,13 +30,13 @@ class Http extends XmlRpcRequest
      * Array of headers
      * @var array
      */
-    protected $_headers;
+    protected $headers;
 
     /**
      * Raw XML as received via request
      * @var string
      */
-    protected $_xml;
+    protected $xml;
 
     /**
      * Constructor
@@ -44,17 +45,18 @@ class Http extends XmlRpcRequest
      * occurs in doing so, or if the XML is invalid, the request is declared a
      * fault.
      *
-     * @return void
      */
     public function __construct()
     {
-        $xml = @file_get_contents('php://input');
+        ErrorHandler::start();
+        $xml = file_get_contents('php://input');
+        ErrorHandler::stop();
         if (!$xml) {
-            $this->_fault = new Fault(630);
+            $this->fault = new Fault(630);
             return;
         }
 
-        $this->_xml = $xml;
+        $this->xml = $xml;
 
         $this->loadXml($xml);
     }
@@ -66,7 +68,7 @@ class Http extends XmlRpcRequest
      */
     public function getRawRequest()
     {
-        return $this->_xml;
+        return $this->xml;
     }
 
     /**
@@ -78,17 +80,17 @@ class Http extends XmlRpcRequest
      */
     public function getHeaders()
     {
-        if (null === $this->_headers) {
-            $this->_headers = array();
+        if (null === $this->headers) {
+            $this->headers = array();
             foreach ($_SERVER as $key => $value) {
                 if ('HTTP_' == substr($key, 0, 5)) {
                     $header = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($key, 5)))));
-                    $this->_headers[$header] = $value;
+                    $this->headers[$header] = $value;
                 }
             }
         }
 
-        return $this->_headers;
+        return $this->headers;
     }
 
     /**
@@ -103,7 +105,7 @@ class Http extends XmlRpcRequest
             $request .= $key . ': ' . $value . "\n";
         }
 
-        $request .= $this->_xml;
+        $request .= $this->xml;
 
         return $request;
     }

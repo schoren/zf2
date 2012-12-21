@@ -11,11 +11,11 @@
 namespace Zend\View\Helper\Navigation;
 
 use RecursiveIteratorIterator;
-use Zend\Acl;
 use Zend\I18n\Translator\Translator;
 use Zend\I18n\Translator\TranslatorAwareInterface;
 use Zend\Navigation;
 use Zend\Navigation\Page\AbstractPage;
+use Zend\Permissions\Acl;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\View;
@@ -28,7 +28,7 @@ use Zend\View\Exception;
  * @package    Zend_View
  * @subpackage Helper
  */
-abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements 
+abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
     HelperInterface,
     ServiceLocatorAwareInterface,
     TranslatorAwareInterface
@@ -74,7 +74,7 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
     protected $acl;
 
     /**
-     * Wheter invisible items should be rendered by this helper
+     * Whether invisible items should be rendered by this helper
      *
      * @var bool
      */
@@ -83,7 +83,7 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
     /**
      * ACL role to use when iterating pages
      *
-     * @var string|Acl\Role
+     * @var string|Acl\Role\RoleInterface
      */
     protected $role;
 
@@ -127,7 +127,7 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
      * Default ACL role to use when iterating pages if not explicitly set in the
      * instance by calling {@link setRole()}
      *
-     * @var string|Acl\Role
+     * @var string|Acl\Role\RoleInterface
      */
     protected static $defaultRole;
 
@@ -182,7 +182,7 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
     public function getContainer()
     {
         if (null === $this->container) {
-            $this->container = new \Zend\Navigation\Navigation();
+            $this->container = new Navigation\Navigation();
         }
 
         return $this->container;
@@ -191,8 +191,8 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
     /**
      * Verifies container and eventually fetches it from service locator if it is a string
      *
-     * @param \Zend\Navigation\AbstractContainer|string|null $container
-     * @throws \Zend\View\Exception\InvalidArgumentException
+     * @param  Navigation\AbstractContainer|string|null $container
+     * @throws Exception\InvalidArgumentException
      */
     protected function parseContainer(&$container = null)
     {
@@ -208,7 +208,18 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
                 ));
             }
 
-            $container = $this->getServiceLocator()->get($container);
+            /**
+             * Load the navigation container from the root service locator
+             *
+             * The navigation container is probably located in Zend\ServiceManager\ServiceManager
+             * and not in the View\HelperPluginManager. If the set service locator is a
+             * HelperPluginManager, access the navigation container via the main service locator.
+             */
+            $sl = $this->getServiceLocator();
+            if ($sl instanceof View\HelperPluginManager) {
+                $sl = $sl->getServiceLocator();
+            }
+            $container = $sl->get($container);
             return;
         }
 
@@ -324,8 +335,8 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
      */
     public function getAcl()
     {
-        if ($this->acl === null && self::$defaultAcl !== null) {
-            return self::$defaultAcl;
+        if ($this->acl === null && static::$defaultAcl !== null) {
+            return static::$defaultAcl;
         }
 
         return $this->acl;
@@ -351,7 +362,7 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
         } else {
             throw new Exception\InvalidArgumentException(sprintf(
                 '$role must be a string, null, or an instance of '
-                .  'Zend\Acl\Role\RoleInterface; %s given',
+                .  'Zend\Permissions\Role\RoleInterface; %s given',
                 (is_object($role) ? get_class($role) : gettype($role))
             ));
         }
@@ -369,8 +380,8 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
      */
     public function getRole()
     {
-        if ($this->role === null && self::$defaultRole !== null) {
-            return self::$defaultRole;
+        if ($this->role === null && static::$defaultRole !== null) {
+            return static::$defaultRole;
         }
 
         return $this->role;
@@ -474,7 +485,7 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
      *                                          {@link getMinDepth()}. A
      *                                          null value means no minimum
      *                                          depth required.
-     * @param  int|null             $minDepth   [optional] maximum depth
+     * @param  int|null             $maxDepth   [optional] maximum depth
      *                                          a page can have to be
      *                                          valid. Default is to use
      *                                          {@link getMaxDepth()}. A
@@ -604,7 +615,7 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
 
         $escaper = $this->view->plugin('escapeHtml');
 
-        return '<a' . $this->_htmlAttribs($attribs) . '>'
+        return '<a' . $this->htmlAttribs($attribs) . '>'
              . $escaper($label)
              . '</a>';
     }
@@ -794,13 +805,13 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
     /**
      * Converts an associative array to a string of tag attributes.
      *
-     * Overloads {@link View\Helper\AbstractHtmlElement::_htmlAttribs()}.
+     * Overloads {@link View\Helper\AbstractHtmlElement::htmlAttribs()}.
      *
      * @param  array $attribs  an array where each key-value pair is converted
      *                         to an attribute name and value
      * @return string          an attribute string
      */
-    protected function _htmlAttribs($attribs)
+    protected function htmlAttribs($attribs)
     {
         // filter out null values and empty string values
         foreach ($attribs as $key => $value) {
@@ -809,18 +820,18 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
             }
         }
 
-        return parent::_htmlAttribs($attribs);
+        return parent::htmlAttribs($attribs);
     }
 
     /**
      * Normalize an ID
      *
-     * Overrides {@link View\Helper\AbstractHtmlElement::_normalizeId()}.
+     * Overrides {@link View\Helper\AbstractHtmlElement::normalizeId()}.
      *
      * @param  string $value
      * @return string
      */
-    protected function _normalizeId($value)
+    protected function normalizeId($value)
     {
         $prefix = get_class($this);
         $prefix = strtolower(trim(substr($prefix, strrpos($prefix, '\\')), '\\'));
@@ -839,7 +850,7 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
      */
     public static function setDefaultAcl(Acl\Acl $acl = null)
     {
-        self::$defaultAcl = $acl;
+        static::$defaultAcl = $acl;
     }
 
     /**
@@ -858,10 +869,10 @@ abstract class AbstractHelper extends View\Helper\AbstractHtmlElement implements
             || is_string($role)
             || $role instanceof Acl\Role\RoleInterface
         ) {
-            self::$defaultRole = $role;
+            static::$defaultRole = $role;
         } else {
             throw new Exception\InvalidArgumentException(sprintf(
-                '$role must be null|string|Zend\Acl\Role\RoleInterface; received "%s"',
+                '$role must be null|string|Zend\Permissions\Role\RoleInterface; received "%s"',
                 (is_object($role) ? get_class($role) : gettype($role))
             ));
         }

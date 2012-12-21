@@ -51,7 +51,7 @@ class Capabilities
      *
      * @var null|boolean
      */
-    protected $_expiredRead;
+    protected $expiredRead;
 
     /**
      * Max. key length
@@ -61,7 +61,7 @@ class Capabilities
      *
      * @var null|int
      */
-    protected $_maxKeyLength;
+    protected $maxKeyLength;
 
     /**
      * Min. TTL (0 means items never expire)
@@ -71,7 +71,7 @@ class Capabilities
      *
      * @var null|int
      */
-    protected $_minTtl;
+    protected $minTtl;
 
     /**
      * Max. TTL (0 means infinite)
@@ -81,7 +81,7 @@ class Capabilities
      *
      * @var null|int
      */
-    protected $_maxTtl;
+    protected $maxTtl;
 
     /**
      * Namespace is prefix
@@ -91,7 +91,7 @@ class Capabilities
      *
      * @var null|boolean
      */
-    protected $_namespaceIsPrefix;
+    protected $namespaceIsPrefix;
 
     /**
      * Namespace separator
@@ -101,7 +101,7 @@ class Capabilities
      *
      * @var null|string
      */
-    protected $_namespaceSeparator;
+    protected $namespaceSeparator;
 
     /**
      * Static ttl
@@ -111,7 +111,7 @@ class Capabilities
      *
      * @var null|boolean
      */
-    protected $_staticTtl;
+    protected $staticTtl;
 
    /**
     * Supported datatypes
@@ -121,7 +121,7 @@ class Capabilities
     *
     * @var null|array
     */
-    protected $_supportedDatatypes;
+    protected $supportedDatatypes;
 
     /**
      * Supported metdata
@@ -131,7 +131,7 @@ class Capabilities
      *
      * @var null|array
      */
-    protected $_supportedMetadata;
+    protected $supportedMetadata;
 
     /**
      * TTL precision
@@ -141,7 +141,7 @@ class Capabilities
      *
      * @var null|int
      */
-    protected $_ttlPrecision;
+    protected $ttlPrecision;
 
     /**
      * Use request time
@@ -151,12 +151,12 @@ class Capabilities
      *
      * @var null|boolean
      */
-    protected $_useRequestTime;
+    protected $useRequestTime;
 
     /**
      * Constructor
      *
-     * @param Adapter           $adapter
+     * @param StorageInterface  $storage
      * @param stdClass          $marker
      * @param array             $capabilities
      * @param null|Capabilities $baseCapabilities
@@ -179,7 +179,7 @@ class Capabilities
     /**
      * Get the storage adapter
      *
-     * @return Adapter
+     * @return StorageInterface
      */
     public function getAdapter()
     {
@@ -210,6 +210,7 @@ class Capabilities
      *
      * @param  stdClass $marker
      * @param  array $datatypes
+     * @throws Exception\InvalidArgumentException
      * @return Capabilities Fluent interface
      */
     public function setSupportedDatatypes(stdClass $marker, array $datatypes)
@@ -244,7 +245,7 @@ class Capabilities
         // add missing datatypes as not supported
         $missingTypes = array_diff($allTypes, array_keys($datatypes));
         foreach ($missingTypes as $type) {
-            $datatypes[type] = false;
+            $datatypes[$type] = false;
         }
 
         return $this->setCapability($marker, 'supportedDatatypes', $datatypes);
@@ -265,6 +266,7 @@ class Capabilities
      *
      * @param  stdClass $marker
      * @param  string[] $metadata
+     * @throws Exception\InvalidArgumentException
      * @return Capabilities Fluent interface
      */
     public function setSupportedMetadata(stdClass $marker, array $metadata)
@@ -292,6 +294,7 @@ class Capabilities
      *
      * @param  stdClass $marker
      * @param  int $minTtl
+     * @throws Exception\InvalidArgumentException
      * @return Capabilities Fluent interface
      */
     public function setMinTtl(stdClass $marker, $minTtl)
@@ -318,6 +321,7 @@ class Capabilities
      *
      * @param  stdClass $marker
      * @param  int $maxTtl
+     * @throws Exception\InvalidArgumentException
      * @return Capabilities Fluent interface
      */
     public function setMaxTtl(stdClass $marker, $maxTtl)
@@ -367,6 +371,7 @@ class Capabilities
      *
      * @param  stdClass $marker
      * @param  float $ttlPrecision
+     * @throws Exception\InvalidArgumentException
      * @return Capabilities Fluent interface
      */
     public function setTtlPrecision(stdClass $marker, $ttlPrecision)
@@ -433,10 +438,11 @@ class Capabilities
     }
 
     /**
-     * Set maximum key lenth
+     * Set maximum key length
      *
      * @param  stdClass $marker
      * @param  int $maxKeyLength
+     * @throws Exception\InvalidArgumentException
      * @return Capabilities Fluent interface
      */
     public function setMaxKeyLength(stdClass $marker, $maxKeyLength)
@@ -495,17 +501,16 @@ class Capabilities
     /**
      * Get a capability
      *
-     * @param  string $name
+     * @param  string $property
      * @param  mixed $default
      * @return mixed
      */
-    protected function getCapability($name, $default = null)
+    protected function getCapability($property, $default = null)
     {
-        $property = '_' . $name;
         if ($this->$property !== null) {
             return $this->$property;
         } elseif ($this->baseCapabilities) {
-            $getMethod = 'get' . $name;
+            $getMethod = 'get' . $property;
             return $this->baseCapabilities->$getMethod();
         }
         return $default;
@@ -515,25 +520,24 @@ class Capabilities
      * Change a capability
      *
      * @param  stdClass $marker
-     * @param  string $name
+     * @param  string $property
      * @param  mixed $value
      * @return Capabilities Fluent interface
      * @throws Exception\InvalidArgumentException
      */
-    protected function setCapability(stdClass $marker, $name, $value)
+    protected function setCapability(stdClass $marker, $property, $value)
     {
         if ($this->marker !== $marker) {
             throw new Exception\InvalidArgumentException('Invalid marker');
         }
 
-        $property = '_' . $name;
         if ($this->$property !== $value) {
             $this->$property = $value;
 
             // trigger event
             if ($this->storage instanceof EventsCapableInterface) {
                 $this->storage->getEventManager()->trigger('capability', $this->storage, new ArrayObject(array(
-                    $name => $value
+                    $property => $value
                 )));
             }
         }

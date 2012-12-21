@@ -47,7 +47,7 @@ class FilterPluginManager extends AbstractPluginManager
         'digits'                    => 'Zend\Filter\Digits',
         'dir'                       => 'Zend\Filter\Dir',
         'encrypt'                   => 'Zend\Filter\Encrypt',
-        'encryptmcrypt'             => 'Zend\Filter\Encrypt\Mcrypt',
+        'encryptblockcipher'        => 'Zend\Filter\Encrypt\BlockCipher',
         'encryptopenssl'            => 'Zend\Filter\Encrypt\Openssl',
         'filedecrypt'               => 'Zend\Filter\File\Decrypt',
         'fileencrypt'               => 'Zend\Filter\File\Encrypt',
@@ -81,6 +81,13 @@ class FilterPluginManager extends AbstractPluginManager
         'wordunderscoretodash'      => 'Zend\Filter\Word\UnderscoreToDash',
         'wordunderscoretoseparator' => 'Zend\Filter\Word\UnderscoreToSeparator',
     );
+
+    /**
+     * Whether or not to share by default; default to false
+     *
+     * @var bool
+     */
+    protected $shareByDefault = false;
 
     /**
      * Validate the plugin

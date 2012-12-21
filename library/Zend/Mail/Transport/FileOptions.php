@@ -26,7 +26,7 @@ class FileOptions extends AbstractOptions
     protected $path;
 
     /**
-     * @var callback
+     * @var callable
      */
     protected $callback;
 
@@ -68,7 +68,7 @@ class FileOptions extends AbstractOptions
     /**
      * Set callback used to generate a file name
      *
-     * @param  callback $callback
+     * @param  callable $callback
      * @throws \Zend\Mail\Exception\InvalidArgumentException
      * @return FileOptions
      */
@@ -88,12 +88,12 @@ class FileOptions extends AbstractOptions
     /**
      * Get callback used to generate a file name
      *
-     * @return callback
+     * @return callable
      */
     public function getCallback()
     {
         if (null === $this->callback) {
-            $this->setCallback(function($transport) {
+            $this->setCallback(function ($transport) {
                 return 'ZendMail_' . time() . '_' . mt_rand() . '.tmp';
             });
         }

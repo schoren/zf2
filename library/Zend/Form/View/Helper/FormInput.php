@@ -94,6 +94,7 @@ class FormInput extends AbstractHelper
      * Render a form <input> element from the provided $element
      *
      * @param  ElementInterface $element
+     * @throws Exception\DomainException
      * @return string
      */
     public function render(ElementInterface $element)
@@ -106,9 +107,10 @@ class FormInput extends AbstractHelper
             ));
         }
 
-        $attributes         = $element->getAttributes();
-        $attributes['name'] = $name;
-        $attributes['type'] = $this->getType($element);
+        $attributes          = $element->getAttributes();
+        $attributes['name']  = $name;
+        $attributes['type']  = $this->getType($element);
+        $attributes['value'] = $element->getValue();
 
         return sprintf(
             '<input %s%s',

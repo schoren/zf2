@@ -10,7 +10,6 @@
 
 namespace Zend\Mail\Header;
 
-use Zend\Mail\Headers;
 
 /**
  * @category   Zend
@@ -33,7 +32,7 @@ class MessageId implements HeaderInterface
         if (strtolower($name) !== 'message-id') {
             throw new Exception\InvalidArgumentException('Invalid header line for Message-ID string');
         }
-        
+
         $header = new static();
         $header->setId($value);
 
@@ -69,6 +68,7 @@ class MessageId implements HeaderInterface
     /**
      * Set the message id
      *
+     * @param string|null $id
      * @return MessageId
      */
     public function setId($id = null)
@@ -76,12 +76,12 @@ class MessageId implements HeaderInterface
         if ($id === null) {
             $id = $this->createMessageId();
         }
-        
+
         $id = sprintf('<%s>', $id);
         $this->messageId = $id;
         return $this;
     }
-    
+
     /**
      * Retrieve the message id
      *
@@ -91,14 +91,14 @@ class MessageId implements HeaderInterface
     {
         return $this->messageId;
     }
-    
+
     /**
      * Creates the Message-ID
      *
      * @return string
      */
-    public function createMessageId() {
-
+    public function createMessageId()
+    {
         $time = time();
 
         if (isset($_SERVER['REMOTE_ADDR'])) {
@@ -117,5 +117,5 @@ class MessageId implements HeaderInterface
 
         return sha1($time . $user . $rand) . '@' . $hostName;
     }
-    
+
 }

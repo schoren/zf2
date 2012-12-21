@@ -23,17 +23,17 @@ class Base64 extends AbstractScalar
      * We keep this value in base64 encoding
      *
      * @param string $value
-     * @param bool $already_encoded If set, it means that the given string is already base64 encoded
+     * @param bool $alreadyEncoded If set, it means that the given string is already base64 encoded
      */
     public function __construct($value, $alreadyEncoded = false)
     {
-        $this->_type = self::XMLRPC_TYPE_BASE64;
+        $this->type = self::XMLRPC_TYPE_BASE64;
 
         $value = (string)$value;    // Make sure this value is string
         if (!$alreadyEncoded) {
             $value = base64_encode($value);     // We encode it in base64
         }
-        $this->_value = $value;
+        $this->value = $value;
     }
 
     /**
@@ -44,6 +44,6 @@ class Base64 extends AbstractScalar
      */
     public function getValue()
     {
-        return base64_decode($this->_value);
+        return base64_decode($this->value);
     }
 }

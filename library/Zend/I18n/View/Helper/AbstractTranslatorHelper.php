@@ -16,10 +16,10 @@ use Zend\View\Helper\AbstractHelper;
 
 /**
  * @category   Zend
- * @package    Zend_View
- * @subpackage Helper
+ * @package    Zend_I18n
+ * @subpackage View
  */
-abstract class AbstractTranslatorHelper extends AbstractHelper implements 
+abstract class AbstractTranslatorHelper extends AbstractHelper implements
     TranslatorAwareInterface
 {
     /**

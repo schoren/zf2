@@ -24,28 +24,28 @@ class Item implements TaggableInterface
      *
      * @var string
      */
-    protected $_title = null;
+    protected $title = null;
 
     /**
      * Weight of the tag
      *
      * @var float
      */
-    protected $_weight = null;
+    protected $weight = null;
 
     /**
      * Custom parameters
      *
      * @var string
      */
-    protected $_params = array();
+    protected $params = array();
 
     /**
      * Option keys to skip when calling setOptions()
      *
      * @var array
      */
-    protected $_skipOptions = array(
+    protected $skipOptions = array(
         'options',
         'param'
     );
@@ -57,7 +57,6 @@ class Item implements TaggableInterface
      * @throws \Zend\Tag\Exception\InvalidArgumentException When invalid options are provided
      * @throws \Zend\Tag\Exception\InvalidArgumentException When title was not set
      * @throws \Zend\Tag\Exception\InvalidArgumentException When weight was not set
-     * @return void
      */
     public function __construct($options)
     {
@@ -71,11 +70,11 @@ class Item implements TaggableInterface
 
         $this->setOptions($options);
 
-        if ($this->_title === null) {
+        if ($this->title === null) {
             throw new Exception\InvalidArgumentException('Title was not set');
         }
 
-        if ($this->_weight === null) {
+        if ($this->weight === null) {
             throw new Exception\InvalidArgumentException('Weight was not set');
         }
     }
@@ -89,7 +88,7 @@ class Item implements TaggableInterface
     public function setOptions(array $options)
     {
         foreach ($options as $key => $value) {
-            if (in_array(strtolower($key), $this->_skipOptions)) {
+            if (in_array(strtolower($key), $this->skipOptions)) {
                 continue;
             }
 
@@ -109,7 +108,7 @@ class Item implements TaggableInterface
      */
     public function getTitle()
     {
-        return $this->_title;
+        return $this->title;
     }
 
     /**
@@ -125,7 +124,7 @@ class Item implements TaggableInterface
             throw new Exception\InvalidArgumentException('Title must be a string');
         }
 
-        $this->_title = (string) $title;
+        $this->title = (string) $title;
         return $this;
     }
 
@@ -136,7 +135,7 @@ class Item implements TaggableInterface
      */
     public function getWeight()
     {
-        return $this->_weight;
+        return $this->weight;
     }
 
     /**
@@ -152,7 +151,7 @@ class Item implements TaggableInterface
             throw new Exception\InvalidArgumentException('Weight must be numeric');
         }
 
-        $this->_weight = (float) $weight;
+        $this->weight = (float) $weight;
         return $this;
     }
 
@@ -180,7 +179,7 @@ class Item implements TaggableInterface
      */
     public function setParam($name, $value)
     {
-        $this->_params[$name] = $value;
+        $this->params[$name] = $value;
         return $this;
     }
 
@@ -192,8 +191,8 @@ class Item implements TaggableInterface
      */
     public function getParam($name)
     {
-        if (isset($this->_params[$name])) {
-            return $this->_params[$name];
+        if (isset($this->params[$name])) {
+            return $this->params[$name];
         }
         return null;
     }

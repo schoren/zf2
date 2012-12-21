@@ -24,15 +24,15 @@ class ServerIntrospection
     /**
      * @var \Zend\XmlRpc\Client\ServerProxy
      */
-    private $_system = null;
+    private $system = null;
 
 
     /**
-     * @param Zend\XmlRpc\Client $client
+     * @param \Zend\XmlRpc\Client $client
      */
     public function __construct(XMLRPCClient $client)
     {
-        $this->_system = $client->getProxy('system');
+        $this->system = $client->getProxy('system');
     }
 
     /**
@@ -65,6 +65,7 @@ class ServerIntrospection
      * can significantly improve performance if present.
      *
      * @param  array $methods
+     * @throws Exception\IntrospectException
      * @return array array(array(return, param, param, param...))
      */
     public function getSignatureForEachMethodByMulticall($methods = null)
@@ -79,7 +80,7 @@ class ServerIntrospection
                                        'params'     => array($method));
         }
 
-        $serverSignatures = $this->_system->multicall($multicallParams);
+        $serverSignatures = $this->system->multicall($multicallParams);
 
         if (! is_array($serverSignatures)) {
             $type = gettype($serverSignatures);
@@ -126,11 +127,12 @@ class ServerIntrospection
      * Call system.methodSignature() for the given method
      *
      * @param  array  $method
+     * @throws Exception\IntrospectException
      * @return array  array(array(return, param, param, param...))
      */
     public function getMethodSignature($method)
     {
-        $signature = $this->_system->methodSignature($method);
+        $signature = $this->system->methodSignature($method);
         if (!is_array($signature)) {
             $error = 'Invalid signature for method "' . $method . '"';
             throw new Exception\IntrospectException($error);
@@ -141,12 +143,11 @@ class ServerIntrospection
     /**
      * Call system.listMethods()
      *
-     * @param  array  $method
      * @return array  array(method, method, method...)
      */
     public function listMethods()
     {
-        return $this->_system->listMethods();
+        return $this->system->listMethods();
     }
 
 }

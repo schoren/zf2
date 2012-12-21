@@ -41,10 +41,10 @@ interface ElementInterface
      * @return ElementInterface
      */
     public function setOptions($options);
-    
+
     /**
      * get the defined options
-     * 
+     *
      * @return array
      */
     public function getOptions();
@@ -98,6 +98,21 @@ interface ElementInterface
      * @return array|\Traversable
      */
     public function getAttributes();
+
+    /**
+     * Set the value of the element
+     *
+     * @param  mixed $value
+     * @return ElementInterface
+     */
+    public function setValue($value);
+
+    /**
+     * Retrieve the element value
+     *
+     * @return mixed
+     */
+    public function getValue();
 
     /**
      * Set the label (if any) used for this element

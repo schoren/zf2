@@ -37,14 +37,6 @@ class Logger implements LoggerInterface
     const DEBUG  = 7;
 
     /**
-     * The format of the date used for a log entry (ISO 8601 date)
-     *
-     * @see http://nl3.php.net/manual/en/function.date.php
-     * @var string
-     */
-    protected $dateTimeFormat = 'c';
-
-    /**
      * List of priority code => priority (short) name
      *
      * @var array
@@ -114,37 +106,14 @@ class Logger implements LoggerInterface
     }
 
     /**
-     * Return the format of DateTime
-     *
-     * @return string
-     */
-    public function getDateTimeFormat()
-    {
-        return $this->dateTimeFormat;
-    }
-
-    /**
-     * Set the format of DateTime
-     *
-     * @see    http://nl3.php.net/manual/en/function.date.php
-     * @param  string $format
-     * @return Logger
-     */
-    public function setDateTimeFormat($format)
-    {
-        $this->dateTimeFormat = (string) $format;
-        return $this;
-    }
-
-    /**
      * Get writer plugin manager
      *
      * @return WriterPluginManager
      */
-    public function getPluginManager()
+    public function getWriterPluginManager()
     {
         if (null === $this->writerPlugins) {
-            $this->setPluginManager(new WriterPluginManager());
+            $this->setWriterPluginManager(new WriterPluginManager());
         }
         return $this->writerPlugins;
     }
@@ -152,11 +121,11 @@ class Logger implements LoggerInterface
     /**
      * Set writer plugin manager
      *
-     * @param string|WriterPluginManager $plugins
+     * @param  string|WriterPluginManager $plugins
      * @return Logger
      * @throws Exception\InvalidArgumentException
      */
-    public function setPluginManager($plugins)
+    public function setWriterPluginManager($plugins)
     {
         if (is_string($plugins)) {
             $plugins = new $plugins;
@@ -178,32 +147,32 @@ class Logger implements LoggerInterface
      *
      * @param string $name
      * @param array|null $options
-     * @return Writer
+     * @return Writer\WriterInterface
      */
-    public function plugin($name, array $options = null)
+    public function writerPlugin($name, array $options = null)
     {
-        return $this->getPluginManager()->get($name, $options);
+        return $this->getWriterPluginManager()->get($name, $options);
     }
 
     /**
      * Add a writer to a logger
      *
-     * @param  string|Writer $writer
+     * @param  string|Writer\WriterInterface $writer
      * @param  int $priority
+     * @param  array|null $options
      * @return Logger
      * @throws Exception\InvalidArgumentException
      */
-    public function addWriter($writer, $priority=1)
+    public function addWriter($writer, $priority = 1, array $options = null)
     {
         if (is_string($writer)) {
-            $writer = $this->plugin($writer);
+            $writer = $this->writerPlugin($writer, $options);
         } elseif (!$writer instanceof Writer\WriterInterface) {
             throw new Exception\InvalidArgumentException(sprintf(
                 'Writer must implement Zend\Log\Writer; received "%s"',
                 is_object($writer) ? get_class($writer) : gettype($writer)
             ));
         }
-
         $this->writers->insert($writer, $priority);
 
         return $this;
@@ -246,6 +215,7 @@ class Logger implements LoggerInterface
      * @return Logger
      * @throws Exception\InvalidArgumentException if message can't be cast to string
      * @throws Exception\InvalidArgumentException if extra can't be iterated over
+     * @throws Exception\RuntimeException if no log writer specified
      */
     public function log($priority, $message, $extra = array())
     {
@@ -274,8 +244,7 @@ class Logger implements LoggerInterface
             throw new Exception\RuntimeException('No log writer specified');
         }
 
-        $date = new DateTime();
-        $timestamp = $date->format($this->getDateTimeFormat());
+        $timestamp = new DateTime();
 
         if (is_array($message)) {
             $message = var_export($message, true);
@@ -385,7 +354,7 @@ class Logger implements LoggerInterface
     public static function registerErrorHandler(Logger $logger)
     {
         // Only register once per instance
-        if (self::$registeredErrorHandler) {
+        if (static::$registeredErrorHandler) {
             return false;
         }
 
@@ -408,10 +377,10 @@ class Logger implements LoggerInterface
             E_USER_DEPRECATED   => self::DEBUG
         );
 
-        set_error_handler(function($errno, $errstr, $errfile, $errline, $errcontext) use ($errorHandlerMap, $logger) {
+        set_error_handler(function ($errno, $errstr, $errfile, $errline, $errcontext) use ($errorHandlerMap, $logger) {
             $errorLevel = error_reporting();
 
-            if ($errorLevel && $errno) {
+            if ($errorLevel & $errno) {
                 if (isset($errorHandlerMap[$errno])) {
                     $priority = $errorHandlerMap[$errno];
                 } else {
@@ -425,7 +394,7 @@ class Logger implements LoggerInterface
                 ));
             }
         });
-        self::$registeredErrorHandler = true;
+        static::$registeredErrorHandler = true;
         return true;
     }
 
@@ -436,7 +405,7 @@ class Logger implements LoggerInterface
     public static function unregisterErrorHandler()
     {
         restore_error_handler();
-        self::$registeredErrorHandler = false;
+        static::$registeredErrorHandler = false;
     }
 
     /**
@@ -450,7 +419,7 @@ class Logger implements LoggerInterface
     public static function registerExceptionHandler(Logger $logger)
     {
         // Only register once per instance
-        if (self::$registeredExceptionHandler) {
+        if (static::$registeredExceptionHandler) {
             return false;
         }
 
@@ -458,7 +427,7 @@ class Logger implements LoggerInterface
             throw new Exception\InvalidArgumentException('Invalid Logger specified');
         }
 
-        set_exception_handler(function ($exception) use ($logger){
+        set_exception_handler(function ($exception) use ($logger) {
             $extra = array(
                 'file'  => $exception->getFile(),
                 'line'  => $exception->getLine(),
@@ -469,7 +438,7 @@ class Logger implements LoggerInterface
             }
             $logger->log(Logger::ERR, $exception->getMessage(), $extra);
         });
-        self::$registeredExceptionHandler = true;
+        static::$registeredExceptionHandler = true;
         return true;
     }
 
@@ -479,6 +448,6 @@ class Logger implements LoggerInterface
     public static function unregisterExceptionHandler()
     {
         restore_exception_handler();
-        self::$registeredExceptionHandler = false;
+        static::$registeredExceptionHandler = false;
     }
 }

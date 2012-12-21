@@ -15,7 +15,7 @@ use Zend\Stdlib\ArrayUtils;
 
 /**
  * @category   Zend
- * @package    Zend_Validate
+ * @package    Zend_Validator
  */
 class LessThan extends AbstractValidator
 {
@@ -91,7 +91,7 @@ class LessThan extends AbstractValidator
         $this->setMax($options['max'])
              ->setInclusive($options['inclusive']);
 
-        parent::__construct();
+        parent::__construct($options);
     }
 
     /**

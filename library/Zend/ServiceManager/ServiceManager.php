@@ -10,6 +10,12 @@
 
 namespace Zend\ServiceManager;
 
+use ReflectionClass;
+
+/**
+ * @category Zend
+ * @package  Zend_ServiceManager
+ */
 class ServiceManager implements ServiceLocatorInterface
 {
 
@@ -38,7 +44,7 @@ class ServiceManager implements ServiceLocatorInterface
     protected $invokableClasses = array();
 
     /**
-     * @var string|callable|Closure|InstanceFactoryInterface[]
+     * @var string|callable|\Closure|FactoryInterface[]
      */
     protected $factories = array();
 
@@ -92,11 +98,18 @@ class ServiceManager implements ServiceLocatorInterface
     protected $retrieveFromPeeringManagerFirst = false;
 
     /**
-     * @var bool Track whether not ot throw exceptions during create()
+     * @var bool Track whether not to throw exceptions during create()
      */
     protected $throwExceptionInCreate = true;
 
     /**
+     * @var array map of characters to be replaced through strtr
+     */
+    protected $canonicalNamesReplacements = array('-' => '', '_' => '', ' ' => '', '\\' => '', '/' => '');
+
+    /**
+     * Constructor
+     *
      * @param ConfigInterface $config
      */
     public function __construct(ConfigInterface $config = null)
@@ -107,7 +120,10 @@ class ServiceManager implements ServiceLocatorInterface
     }
 
     /**
+     * Set allow override
+     *
      * @param $allowOverride
+     * @return ServiceManager
      */
     public function setAllowOverride($allowOverride)
     {
@@ -116,6 +132,8 @@ class ServiceManager implements ServiceLocatorInterface
     }
 
     /**
+     * Get allow override
+     *
      * @return bool
      */
     public function getAllowOverride()
@@ -153,7 +171,9 @@ class ServiceManager implements ServiceLocatorInterface
     }
 
     /**
-     * @param bool $throwExceptionInCreate
+     * Set throw exceptions in create
+     *
+     * @param  bool $throwExceptionInCreate
      * @return ServiceManager
      */
     public function setThrowExceptionInCreate($throwExceptionInCreate)
@@ -163,6 +183,8 @@ class ServiceManager implements ServiceLocatorInterface
     }
 
     /**
+     * Get throw exceptions in create
+     *
      * @return bool
      */
     public function getThrowExceptionInCreate()
@@ -193,9 +215,12 @@ class ServiceManager implements ServiceLocatorInterface
     }
 
     /**
-     * @param $name
-     * @param $invokableClass
-     * @param bool $shared
+     * Set invokable class
+     *
+     * @param  string  $name
+     * @param  string  $invokableClass
+     * @param  bool $shared
+     * @return ServiceManager
      * @throws Exception\InvalidServiceNameException
      */
     public function setInvokableClass($name, $invokableClass, $shared = true)
@@ -203,20 +228,30 @@ class ServiceManager implements ServiceLocatorInterface
         $cName = $this->canonicalizeName($name);
         $rName = $name;
 
-        if ($this->allowOverride === false && $this->has(array($cName, $rName), false)) {
-            throw new Exception\InvalidServiceNameException(sprintf(
-                'A service by the name or alias "%s" already exists and cannot be overridden; please use an alternate name',
-                $cName
-            ));
+        if ($this->has(array($cName, $rName), false)) {
+            if ($this->allowOverride === false) {
+                throw new Exception\InvalidServiceNameException(sprintf(
+                    'A service by the name or alias "%s" already exists and cannot be overridden; please use an alternate name',
+                    $cName
+                ));
+            }
+            $this->unregisterService($cName);
         }
+
         $this->invokableClasses[$cName] = $invokableClass;
-        $this->shared[$cName] = $shared;
+        $this->shared[$cName]           = (bool) $shared;
+
         return $this;
     }
 
     /**
-     * @param $name
-     * @param $factory
+     * Set factory
+     *
+     * @param  string                           $name
+     * @param  string|FactoryInterface|callable $factory
+     * @param  bool                             $shared
+     * @return ServiceManager
+     * @throws Exception\InvalidArgumentException
      * @throws Exception\InvalidServiceNameException
      */
     public function setFactory($name, $factory, $shared = true)
@@ -230,21 +265,28 @@ class ServiceManager implements ServiceLocatorInterface
             );
         }
 
-        if ($this->allowOverride === false && $this->has(array($cName, $rName), false)) {
-            throw new Exception\InvalidServiceNameException(sprintf(
-                'A service by the name or alias "%s" already exists and cannot be overridden, please use an alternate name',
-                $cName
-            ));
+        if ($this->has(array($cName, $rName), false)) {
+            if ($this->allowOverride === false) {
+                throw new Exception\InvalidServiceNameException(sprintf(
+                    'A service by the name or alias "%s" already exists and cannot be overridden, please use an alternate name',
+                    $cName
+                ));
+            }
+            $this->unregisterService($cName);
         }
 
         $this->factories[$cName] = $factory;
-        $this->shared[$cName] = $shared;
+        $this->shared[$cName]    = (bool) $shared;
+
         return $this;
     }
 
     /**
-     * @param AbstractFactoryInterface|string $factory
-     * @param bool $topOfStack
+     * Add abstract factory
+     *
+     * @param  AbstractFactoryInterface|string $factory
+     * @param  bool                            $topOfStack
+     * @return ServiceManager
      * @throws Exception\InvalidArgumentException if the abstract factory is invalid
      */
     public function addAbstractFactory($factory, $topOfStack = true)
@@ -260,7 +302,7 @@ class ServiceManager implements ServiceLocatorInterface
                     'Provided abstract factory must be the class name of an abstract factory or an instance of an AbstractFactoryInterface.'
                 );
             }
-            $refl = new \ReflectionClass($factory);
+            $refl = new ReflectionClass($factory);
             if (!$refl->implementsInterface(__NAMESPACE__ . '\\AbstractFactoryInterface')) {
                 throw new Exception\InvalidArgumentException(
                     'Provided abstract factory must be the class name of an abstract factory or an instance of an AbstractFactoryInterface.'
@@ -277,14 +319,22 @@ class ServiceManager implements ServiceLocatorInterface
     }
 
     /**
-     * @param $initializer
+     * Add initializer
+     *
+     * @param  callable|InitializerInterface $initializer
+     * @param  bool                          $topOfStack
      * @return ServiceManager
      * @throws Exception\InvalidArgumentException
      */
     public function addInitializer($initializer, $topOfStack = true)
     {
         if (!is_callable($initializer) && !$initializer instanceof InitializerInterface) {
-            throw new Exception\InvalidArgumentException('$initializer should be callable.');
+            if (!is_string($initializer)
+                || !$this->isSubclassOf($initializer, __NAMESPACE__ . '\InitializerInterface')
+            ) {
+                throw new Exception\InvalidArgumentException('$initializer should be callable.');
+            }
+            $initializer = new $initializer;
         }
 
         if ($topOfStack) {
@@ -298,10 +348,9 @@ class ServiceManager implements ServiceLocatorInterface
     /**
      * Register a service with the locator
      *
-     * @param string $name
-     * @param mixed $service
-     * @param bool $shared
-     * @param bool $shared
+     * @param  string  $name
+     * @param  mixed   $service
+     * @param  bool    $shared
      * @return ServiceManager
      * @throws Exception\InvalidServiceNameException
      */
@@ -309,26 +358,25 @@ class ServiceManager implements ServiceLocatorInterface
     {
         $cName = $this->canonicalizeName($name);
 
-        if ($this->allowOverride === false && $this->has($cName, false)) {
-            throw new Exception\InvalidServiceNameException(sprintf(
-                '%s: A service by the name "%s" or alias already exists and cannot be overridden, please use an alternate name.',
-                __METHOD__,
-                $name
-            ));
+        if ($this->has($cName, false)) {
+            if ($this->allowOverride === false) {
+                throw new Exception\InvalidServiceNameException(sprintf(
+                    '%s: A service by the name "%s" or alias already exists and cannot be overridden, please use an alternate name.',
+                    __METHOD__,
+                    $name
+                ));
+            }
+            $this->unregisterService($cName);
         }
 
-        /**
-         * @todo If a service is being overwritten, destroy all previous aliases
-         */
-
         $this->instances[$cName] = $service;
-        $this->shared[$cName] = (bool) $shared;
+        $this->shared[$cName]    = (bool) $shared;
         return $this;
     }
 
     /**
-     * @param $name
-     * @param $isShared
+     * @param  string $name
+     * @param  bool   $isShared
      * @return ServiceManager
      * @throws Exception\ServiceNotFoundException
      */
@@ -336,7 +384,11 @@ class ServiceManager implements ServiceLocatorInterface
     {
         $cName = $this->canonicalizeName($name);
 
-        if (!isset($this->invokableClasses[$cName]) && !isset($this->factories[$cName])) {
+        if (
+            !isset($this->invokableClasses[$cName])
+            && !isset($this->factories[$cName])
+            && !$this->canCreateFromAbstractFactory($cName, $name)
+        ) {
             throw new Exception\ServiceNotFoundException(sprintf(
                 '%s: A service by the name "%s" was not found and could not be marked as shared',
                 __METHOD__,
@@ -351,66 +403,60 @@ class ServiceManager implements ServiceLocatorInterface
     /**
      * Retrieve a registered instance
      *
-     * @param  string $cName
-     * @param  array $params
-     * @return mixed
+     * @param  string  $name
+     * @param  bool    $usePeeringServiceManagers
+     * @throws Exception\ServiceNotFoundException
+     * @return object|array
      */
     public function get($name, $usePeeringServiceManagers = true)
     {
-        $cName = $this->canonicalizeName($name);
-        $rName = $name;
+        $cName   = $this->canonicalizeName($name);
+        $rName   = $name;
+        $isAlias = false;
 
         if ($this->hasAlias($cName)) {
+            $isAlias = true;
+
             do {
                 $cName = $this->aliases[$cName];
             } while ($this->hasAlias($cName));
-
-            if (!$this->has(array($cName, $rName))) {
-                throw new Exception\ServiceNotFoundException(sprintf(
-                    'An alias "%s" was requested but no service could be found.',
-                    $name
-                ));
-            }
         }
-
-        $instance = null;
 
         if (isset($this->instances[$cName])) {
-            $instance = $this->instances[$cName];
+            return $this->instances[$cName];
         }
 
-        $selfException = null;
+        $instance                        = null;
+        $retrieveFromPeeringManagerFirst = $this->retrieveFromPeeringManagerFirst();
 
-        if (!$instance && !is_array($instance)) {
-            $retrieveFromPeeringManagerFirst = $this->retrieveFromPeeringManagerFirst();
-            if ($usePeeringServiceManagers && $retrieveFromPeeringManagerFirst) {
+        if ($usePeeringServiceManagers && $retrieveFromPeeringManagerFirst) {
+            $instance = $this->retrieveFromPeeringManager($name);
+        }
+        if (!$instance) {
+            if ($this->canCreate(array($cName, $rName))) {
+                $instance = $this->create(array($cName, $rName));
+            } elseif ($usePeeringServiceManagers && !$retrieveFromPeeringManagerFirst) {
                 $instance = $this->retrieveFromPeeringManager($name);
-            }
-            if (!$instance) {
-                if ($this->canCreate(array($cName, $rName))) {
-                    $instance = $this->create(array($cName, $rName));
-                } elseif ($usePeeringServiceManagers && !$retrieveFromPeeringManagerFirst) {
-                    $instance = $this->retrieveFromPeeringManager($name);
-                }
             }
         }
 
         // Still no instance? raise an exception
         if (!$instance && !is_array($instance)) {
+            if ($isAlias) {
+                throw new Exception\ServiceNotFoundException(sprintf(
+                    'An alias "%s" was requested but no service could be found.',
+                    $name
+                ));
+            }
+
             throw new Exception\ServiceNotFoundException(sprintf(
                 '%s was unable to fetch or create an instance for %s',
-                    __METHOD__,
-                    $name
-                ),
-                null,
-                ($selfException === null) ? null : $selfException->getPrevious()
-            );
+                __METHOD__,
+                $name
+            ));
         }
 
-        if ($this->shareByDefault()
-            && !isset($this->instances[$cName])
-            && (!isset($this->shared[$cName]) || $this->shared[$cName] === true)
-        ) {
+        if ($this->shareByDefault() && (!isset($this->shared[$cName]) || $this->shared[$cName] === true)) {
             $this->instances[$cName] = $instance;
         }
 
@@ -418,10 +464,12 @@ class ServiceManager implements ServiceLocatorInterface
     }
 
     /**
-     * @param string|array $name
-     * @return false|object
+     * Create an instance
+     *
+     * @param  string|array $name
+     * @return bool|object
+     * @throws Exception\ServiceNotFoundException
      * @throws Exception\ServiceNotCreatedException
-     * @throws Exception\InvalidServiceNameException
      */
     public function create($name)
     {
@@ -433,6 +481,7 @@ class ServiceManager implements ServiceLocatorInterface
             $rName = $name;
             $cName = $this->canonicalizeName($rName);
         }
+
 
         if (isset($this->factories[$cName])) {
             $instance = $this->createFromFactory($cName, $rName);
@@ -469,7 +518,9 @@ class ServiceManager implements ServiceLocatorInterface
 
     /**
      * Determine if we can create an instance.
-     * @param $name
+     *
+     * @param  string|array $name
+     * @param  bool         $checkAbstractFactories
      * @return bool
      */
     public function canCreate($name, $checkAbstractFactories = true)
@@ -481,22 +532,12 @@ class ServiceManager implements ServiceLocatorInterface
             $cName = $this->canonicalizeName($rName);
         }
 
-        $has = (
+        if (
             isset($this->invokableClasses[$cName])
             || isset($this->factories[$cName])
             || isset($this->aliases[$cName])
             || isset($this->instances[$cName])
-        );
-
-        if ($has) {
-            return true;
-        }
-
-        if (isset($this->factories[$cName])) {
-            return true;
-        }
-
-        if (isset($this->invokableClasses[$cName])) {
+        ) {
             return true;
         }
 
@@ -508,7 +549,9 @@ class ServiceManager implements ServiceLocatorInterface
     }
 
     /**
-     * @param $name
+     * @param  string|array  $name
+     * @param  bool          $checkAbstractFactories
+     * @param  bool          $usePeeringServiceManagers
      * @return bool
      */
     public function has($name, $checkAbstractFactories = true, $usePeeringServiceManagers = true)
@@ -548,7 +591,7 @@ class ServiceManager implements ServiceLocatorInterface
         foreach ($this->abstractFactories as $index => $abstractFactory) {
             // Support string abstract factory class names
             if (is_string($abstractFactory) && class_exists($abstractFactory, true)) {
-                $this->abstractFactory[$index] = $abstractFactory = new $abstractFactory();
+                $this->abstractFactories[$index] = $abstractFactory = new $abstractFactory();
             }
 
             if (
@@ -566,8 +609,8 @@ class ServiceManager implements ServiceLocatorInterface
     }
 
     /**
-     * @param $alias
-     * @param $nameOrAlias
+     * @param  string $alias
+     * @param  string $nameOrAlias
      * @return ServiceManager
      * @throws Exception\ServiceNotFoundException
      * @throws Exception\InvalidServiceNameException
@@ -586,7 +629,11 @@ class ServiceManager implements ServiceLocatorInterface
         }
 
         if ($this->allowOverride === false && $this->has(array($cAlias, $alias), false)) {
-            throw new Exception\InvalidServiceNameException('An alias by this name already exists');
+            throw new Exception\InvalidServiceNameException(sprintf(
+                'An alias by the name "%s" or "%s" already exists',
+                $cAlias,
+                $alias
+            ));
         }
 
         $this->aliases[$cAlias] = $nameOrAlias;
@@ -594,7 +641,9 @@ class ServiceManager implements ServiceLocatorInterface
     }
 
     /**
-     * @param $alias
+     * Determine if we have an alias
+     *
+     * @param  string $alias
      * @return bool
      */
     public function hasAlias($alias)
@@ -604,7 +653,9 @@ class ServiceManager implements ServiceLocatorInterface
     }
 
     /**
-     * @param string $peering
+     * Create scoped service manager
+     *
+     * @param  string $peering
      * @return ServiceManager
      */
     public function createScopedServiceManager($peering = self::SCOPE_PARENT)
@@ -623,8 +674,8 @@ class ServiceManager implements ServiceLocatorInterface
      * Add a peering relationship
      *
      * @param  ServiceManager $manager
-     * @param  string $peering
-     * @return ServiceManager Current instance
+     * @param  string         $peering
+     * @return ServiceManager
      */
     public function addPeeringServiceManager(ServiceManager $manager, $peering = self::SCOPE_PARENT)
     {
@@ -638,22 +689,29 @@ class ServiceManager implements ServiceLocatorInterface
     }
 
     /**
-     * @param $name
+     * Canonicalize name
+     *
+     * @param  string $name
      * @return string
      */
     protected function canonicalizeName($name)
     {
-        if (!isset($this->canonicalNames[$name])) {
-            $this->canonicalNames[$name] = strtolower(str_replace(array('-', '_', ' ', '\\', '/'), '', $name));
+        if (isset($this->canonicalNames[$name])) {
+            return $this->canonicalNames[$name];
         }
-        return $this->canonicalNames[$name];
+
+        // this is just for performance instead of using str_replace
+        return $this->canonicalNames[$name] = strtolower(strtr($name, $this->canonicalNamesReplacements));
     }
 
     /**
-     * @param callable $callable
-     * @param $cName
-     * @param $rName
+     * Create service via callback
+     *
+     * @param  callable $callable
+     * @param  string   $cName
+     * @param  string   $rName
      * @throws Exception\ServiceNotCreatedException
+     * @throws Exception\ServiceNotFoundException
      * @throws Exception\CircularDependencyFoundException
      * @return object
      */
@@ -705,6 +763,30 @@ class ServiceManager implements ServiceLocatorInterface
     }
 
     /**
+     * Retrieve a keyed list of all canonical names. Handy for debugging!
+     *
+     * @return array
+     */
+    public function getCanonicalNames()
+    {
+        return $this->canonicalNames;
+    }
+
+    /**
+     * Allows to override the canonical names lookup map with predefined
+     * values.
+     *
+     * @param array $canonicalNames
+     * @return ServiceManager
+     */
+    public function setCanonicalNames($canonicalNames)
+    {
+        $this->canonicalNames = $canonicalNames;
+
+        return $this;
+    }
+
+    /**
      * Attempt to retrieve an instance via a peering manager
      *
      * @param  string $name
@@ -717,6 +799,21 @@ class ServiceManager implements ServiceLocatorInterface
                 return $peeringServiceManager->get($name);
             }
         }
+
+        $name = $this->canonicalizeName($name);
+
+        if ($this->hasAlias($name)) {
+            do {
+                $name = $this->aliases[$name];
+            } while ($this->hasAlias($name));
+        }
+
+        foreach ($this->peeringServiceManagers as $peeringServiceManager) {
+            if ($peeringServiceManager->has($name)) {
+                return $peeringServiceManager->get($name);
+            }
+        }
+
         return null;
     }
 
@@ -726,7 +823,7 @@ class ServiceManager implements ServiceLocatorInterface
      * @param  string $canonicalName
      * @param  string $requestedName
      * @return null|\stdClass
-     * @throws Exception\ServiceNotCreatedException If resolved class does not exist
+     * @throws Exception\ServiceNotFoundException If resolved class does not exist
      */
     protected function createFromInvokable($canonicalName, $requestedName)
     {
@@ -737,7 +834,7 @@ class ServiceManager implements ServiceLocatorInterface
                 __METHOD__,
                 $canonicalName,
                 ($requestedName ? '(alias: ' . $requestedName . ')' : ''),
-                $canonicalName
+                $invokable
             ));
         }
         $instance = new $invokable;
@@ -778,7 +875,7 @@ class ServiceManager implements ServiceLocatorInterface
      *
      * @param  string $canonicalName
      * @param  string $requestedName
-     * @return \stdClass|null
+     * @return object|null
      * @throws Exception\ServiceNotCreatedException If abstract factory is not callable
      */
     protected function createFromAbstractFactory($canonicalName, $requestedName)
@@ -796,12 +893,16 @@ class ServiceManager implements ServiceLocatorInterface
             }
             try {
                 $this->pendingAbstractFactoryRequests[get_class($abstractFactory)] = $requestedName;
-                $instance = $this->createServiceViaCallback(
-                    array($abstractFactory, 'createServiceWithName'),
-                    $canonicalName,
-                    $requestedName
-                );
-                unset($this->pendingAbstractFactoryRequests[get_class($abstractFactory)]);
+                if ($abstractFactory->canCreateServiceWithName($this, $canonicalName, $requestedName)) {
+                    $instance = $this->createServiceViaCallback(
+                        array($abstractFactory, 'createServiceWithName'),
+                        $canonicalName,
+                        $requestedName
+                    );
+                    unset($this->pendingAbstractFactoryRequests[get_class($abstractFactory)]);
+                } else {
+                    $instance = false;
+                }
             } catch (\Exception $e) {
                 unset($this->pendingAbstractFactoryRequests[get_class($abstractFactory)]);
                 throw new Exception\ServiceNotCreatedException(
@@ -820,5 +921,59 @@ class ServiceManager implements ServiceLocatorInterface
         }
 
         return $instance;
+    }
+
+    /**
+     * Checks if the object has this class as one of its parents
+     *
+     * @see https://bugs.php.net/bug.php?id=53727
+     * @see https://github.com/zendframework/zf2/pull/1807
+     *
+     * @param string $className
+     * @param string $type
+     * @return bool
+     */
+    protected static function isSubclassOf($className, $type)
+    {
+        if (is_subclass_of($className, $type)) {
+            return true;
+        }
+        if (version_compare(PHP_VERSION, '5.3.7', '>=')) {
+            return false;
+        }
+        if (!interface_exists($type)) {
+            return false;
+        }
+        $r = new ReflectionClass($className);
+        return $r->implementsInterface($type);
+    }
+
+    /**
+     * Unregister a service
+     *
+     * Called when $allowOverride is true and we detect that a service being
+     * added to the instance already exists. This will remove the duplicate
+     * entry, and also any shared flags previously registered.
+     *
+     * @param  string $canonical
+     * @return void
+     */
+    protected function unregisterService($canonical)
+    {
+        $types = array('invokableClasses', 'factories', 'aliases');
+        foreach ($types as $type) {
+            if (isset($this->{$type}[$canonical])) {
+                unset($this->{$type}[$canonical]);
+                break;
+            }
+        }
+
+        if (isset($this->instances[$canonical])) {
+            unset($this->instances[$canonical]);
+        }
+
+        if (isset($this->shared[$canonical])) {
+            unset($this->shared[$canonical]);
+        }
     }
 }

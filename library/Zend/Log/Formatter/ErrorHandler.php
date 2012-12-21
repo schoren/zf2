@@ -10,43 +10,16 @@
 
 namespace Zend\Log\Formatter;
 
-use Zend\Log\Exception;
+use DateTime;
 
 /**
  * @category   Zend
  * @package    Zend_Log
  * @subpackage Formatter
  */
-class ErrorHandler implements FormatterInterface
+class ErrorHandler extends Simple
 {
     const DEFAULT_FORMAT = '%timestamp% %priorityName% (%priority%) %message% (errno %extra[errno]%) in %extra[file]% on line %extra[line]%';
-
-    /**
-     * Format
-     *
-     * @var string
-     */
-    protected $format;
-
-    /**
-     * Class constructor
-     *
-     * @param null|string $format Format specifier for log messages
-     * @return ErrorHandler
-     * @throws Exception\InvalidArgumentException
-     */
-    public function __construct($format = null)
-    {
-        if ($format === null) {
-            $format = self::DEFAULT_FORMAT;
-        }
-
-        if (!is_string($format)) {
-            throw new Exception\InvalidArgumentException('Format must be a string');
-        }
-
-        $this->format = $format;
-    }
 
     /**
      * This method formats the event for the PHP Error Handler.
@@ -57,15 +30,46 @@ class ErrorHandler implements FormatterInterface
     public function format($event)
     {
         $output = $this->format;
-        foreach ($event as $name => $value) {
-            if (is_array($value)) {
-                foreach ($value as $sname => $svalue) {
-                    $output = str_replace("%{$name}[{$sname}]%", $svalue, $output);
+
+        if (isset($event['timestamp']) && $event['timestamp'] instanceof DateTime) {
+            $event['timestamp'] = $event['timestamp']->format($this->getDateTimeFormat());
+        }
+
+        foreach ($this->buildReplacementsFromArray($event) as $name => $value) {
+            $output = str_replace("%$name%", $value, $output);
+        }
+
+        return $output;
+    }
+
+    /**
+     * Flatten the multi-dimensional $event array into a single dimensional
+     * array
+     *
+     * @param array $event
+     * @param string $key
+     * @return array
+     */
+    protected function buildReplacementsFromArray ($event, $key = null)
+    {
+        $result = array();
+        foreach ($event as $index => $value) {
+            $nextIndex = $key === null ? $index : $key . '[' . $index . ']';
+            if ($value === null) {
+                continue;
+            }
+            if (! is_array($value)) {
+                if ($key === null) {
+                    $result[$nextIndex] = $value;
+                } else {
+                    if (! is_object($value) || method_exists($value, "__toString")) {
+                        $result[$nextIndex] = $value;
+                    }
                 }
             } else {
-                $output = str_replace("%$name%", $value, $output);
+                $result = array_merge($result, $this->buildReplacementsFromArray($value, $nextIndex));
             }
         }
-        return $output;
+        return $result;
     }
 }

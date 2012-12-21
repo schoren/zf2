@@ -174,34 +174,33 @@ abstract class AbstractObject implements ObjectInterface
 
     /**
      * Fix barcode length (numeric or string like 'even')
-     * @var $_barcodeLength integer | string
+     * @var integer | string
      */
     protected $barcodeLength = null;
 
     /**
      * Activate automatic addition of leading zeros
      * if barcode length is fixed
-     * @var $_addLeadingZeros boolean
+     * @var boolean
      */
     protected $addLeadingZeros = true;
 
     /**
      * Activation of mandatory checksum
      * to deactivate unauthorized modification
-     * @var $_mandatoryChecksum boolean
+     * @var boolean
      */
     protected $mandatoryChecksum = false;
 
     /**
      * Character used to substitute checksum character for validation
-     * @var $_substituteChecksumCharacter mixed
+     * @var mixed
      */
     protected $substituteChecksumCharacter = 0;
 
     /**
      * Constructor
      * @param array|Traversable $options
-     * @return void
      */
     public function __construct($options = null)
     {
@@ -403,7 +402,7 @@ abstract class AbstractObject implements ObjectInterface
 
     /**
      * Retrieve color of the barcode and text
-     * @return unknown
+     * @return integer
      */
     public function getForeColor()
     {
@@ -462,7 +461,7 @@ abstract class AbstractObject implements ObjectInterface
     /**
      * Activate/deactivate drawing of the quiet zones
      * @param boolean $value
-     * @return Zend\Barcode\AbstractObject
+     * @return AbstractObject
      */
     public function setWithQuietZones($value)
     {
@@ -540,6 +539,7 @@ abstract class AbstractObject implements ObjectInterface
      * Automatically add leading zeros if barcode length is fixed
      * @param string $text
      * @param boolean $withoutChecksum
+     * @return string
      */
     protected function addLeadingZeros($text, $withoutChecksum = false)
     {
@@ -576,9 +576,9 @@ abstract class AbstractObject implements ObjectInterface
     {
         if ($this->withChecksumInText) {
             return $this->getText();
-        } else {
-            return $this->addLeadingZeros($this->text, true);
         }
+
+        return $this->addLeadingZeros($this->text, true);
     }
 
     /**
@@ -758,9 +758,9 @@ abstract class AbstractObject implements ObjectInterface
     {
         if ($this->withQuietZones || $this->mandatoryQuietZones) {
             return 10 * $this->barThinWidth * $this->factor;
-        } else {
-            return 0;
         }
+
+        return 0;
     }
 
     /**
@@ -836,7 +836,7 @@ abstract class AbstractObject implements ObjectInterface
 
     /**
      * Checking of parameters after all settings
-     * @return void
+     * @return bool
      */
     public function checkParams()
     {
@@ -944,6 +944,7 @@ abstract class AbstractObject implements ObjectInterface
 
     /**
      * Get height of the result object
+     * @param bool $recalculate
      * @return integer
      */
     public function getHeight($recalculate = false)
@@ -958,6 +959,7 @@ abstract class AbstractObject implements ObjectInterface
 
     /**
      * Get width of the result object
+     * @param bool $recalculate
      * @return integer
      */
     public function getWidth($recalculate = false)
@@ -1182,7 +1184,7 @@ abstract class AbstractObject implements ObjectInterface
 
     /**
      * Check for invalid characters
-     * @param   string $value    Text to be ckecked
+     * @param   string $value    Text to be checked
      * @return void
      */
     public function validateText($value)

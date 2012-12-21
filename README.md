@@ -1,40 +1,19 @@
-### Welcome to the *Zend Framework 2.0.0* Release!
+### Welcome to the *Zend Framework 2.0* Release!
 
 Master: [![Build Status](https://secure.travis-ci.org/zendframework/zf2.png?branch=master)](http://travis-ci.org/zendframework/zf2)
+Develop: [![Build Status](https://secure.travis-ci.org/zendframework/zf2.png?branch=develop)](http://travis-ci.org/zendframework/zf2)
 
 ## RELEASE INFORMATION
 
-*Zend Framework 2.0.0dev-rc1*
+*Zend Framework 2.0.6*
 
-6 July 2012
+This is the sixth maintenance release for the 2.0 series.
 
-THIS RELEASE IS A DEVELOPMENT RELEASE AND NOT INTENDED FOR PRODUCTION USE.
-PLEASE USE AT YOUR OWN RISK.
+XX YYY 2012
 
-### NEW FEATURES / UPDATES IN RC1
+### UPDATES IN 2.0.6
 
- - Documentation
-   - is now in a new repository,
-     https://github.com/zendframework/zf2-documentation
-   - Documentation has been converted from DocBook5 to ReStructured Text
-     (reST or rst).
- - Form
-   - Select-style elements now have options populated as value => label
-     pairs instead of label => value pairs. This is done to ensure that
-     option values are unique.
- - Moved Zend\I18n\Validator\Iban to Zend\Validator\Iban
-   and replaced the option "locale" with "country_code"
- - Http
-   - set/getServer() and set/getEnv() were removed from Http\Request
-     and now part of Http\PhpEnvironment\Request
-   - set/getFile() methods in Http\PhpEnvironment\Request
-     were renamed to set/getFiles(). Also above methods
-   - When submitted form has file inputs with brackets (name="file[]")
-     $fileParams parameters in Http\PhpEnvironment\Request will be
-     re-structured to have the same look as query/post/server/envParams
-
-Over *XXX* pull requests for a variety of features and bugfixes were handled
-since beta5!
+Please see CHANGELOG.md.
 
 ### SYSTEM REQUIREMENTS
 
@@ -43,12 +22,12 @@ latest PHP version whenever possible.
 
 ### INSTALLATION
 
-Please see [INSTALL.md](INSTALL.md).
+Please see INSTALL.md.
 
 ### CONTRIBUTING
 
 If you wish to contribute to Zend Framework 2.0, please read both the
-[README-DEV.md](README-DEV.md) and [README-GIT.md](README-GIT.md) file.
+CONTRIBUTING.md and README-GIT.md file.
 
 ### QUESTIONS AND FEEDBACK
 
@@ -56,13 +35,13 @@ Online documentation can be found at http://framework.zend.com/manual.
 Questions that are not addressed in the manual should be directed to the
 appropriate mailing list:
 
-http://framework.zend.com/wiki/display/ZFDEV/Mailing+Lists
+http://framework.zend.com/archives/subscribe/
 
 If you find code in this release behaving in an unexpected manner or
-contrary to its documented behavior, please create an issue in the Zend
-Framework issue tracker at:
+contrary to its documented behavior, please create an issue in our GitHub
+issue tracker:
 
-http://framework.zend.com/issues/browse/ZF2
+https://github.com/zendframework/zf2/issues
 
 If you would like to be notified of new releases, you can subscribe to
 the fw-announce mailing list by sending a blank message to
@@ -71,7 +50,7 @@ the fw-announce mailing list by sending a blank message to
 ### LICENSE
 
 The files in this archive are released under the Zend Framework license.
-You can find a copy of this license in [LICENSE.txt](LICENSE.txt).
+You can find a copy of this license in LICENSE.txt.
 
 ### ACKNOWLEDGEMENTS
 
